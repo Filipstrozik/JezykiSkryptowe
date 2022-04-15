@@ -1,0 +1,3 @@
+jeden dwa trzy trzy cztery cztery cztery
+ostatni wers cztery piec osiem dwa jeden
+java -classpath "D:\MAIN\CODING\Sem 4\JezykiSkryptowe\L1\Testowe\src" Sciezki -R

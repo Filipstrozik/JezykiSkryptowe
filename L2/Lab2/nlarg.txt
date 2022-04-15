@@ -1,0 +1,6 @@
+@echo off
+SETLOCAL EnableDelayedExpansion
+
+javac -cp D:\MAIN\CODING\Sem 4\JezykiSkryptowe\L2\Lab2\src process.java
+
+dir /A-D /S /-C | java -cp "D:\MAIN\CODING\Sem 4\JezykiSkryptowe\L2\Lab2\src" process --select=. | sort /+18 /R | java -cp "D:\MAIN\CODING\Sem 4\JezykiSkryptowe\L2\Lab2\src" Head --lines=%1

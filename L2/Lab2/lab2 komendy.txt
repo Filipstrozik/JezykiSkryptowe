@@ -1,0 +1,52 @@
+Lab 2 przykładowe komendy
+Z1:
+
+javac process.java
+java process < cities.csv
+java process --ignorefirst=4 < cities.csv
+java process --ignorefirst=4 --ignorelast=4 < cities.csv
+java process --ignorefirst=4 --ignorelast=4 --project=9,1 < cities.csv
+java process --ignorefirst=4 --ignorelast=4 --delimiter=, < cities.csv
+java process --ignorefirst=4 --ignorelast=4 --delimiter=, --separator="  " < cities.csv
+java process --ignorefirst=4 --ignorelast=4 --delimiter=, --project=9,1,8 < cities.csv
+java process --ignorefirst=4 --ignorelast=4 --delimiter=, --project=9,1,8 --select=1 < cities.csv
+java process --ignorefirst=4 --ignorelast=4 --delimiter=, --project=9,1,8 --select=1 < cities.csv > output.txt
+
+
+
+Z2:
+
+javac Head.java
+java Head --lines=10 < cities.csv
+java Head --lines=10 < input.txt
+java Head --lines=10 -e < input.txt
+java Head --lines=2 < input.txt
+
+
+Z3:
+javac Tail.java
+java Tail --lines=20 < cities.csv
+java Tail --lines=10 < input.txt
+java Tail --lines=10 -e < input.txt
+java Tail --lines=2 < input.txt
+
+Z4:
+
+python .\nlarg.py 10   
+python .\nlarg.py 2
+python .\nlarg.py
+
+python .\avgext.py .exe
+python .\avgext.py .txt
+python .\avgext.py  
+
+
+
+Z5:
+
+save [--src="D:\POBRANE\zadania-master"] --dst="D:\MAIN\CODING"
+
+save --dst="D:\MAIN\CODING"
+
+call "D:\MAIN\CODING\Sem 4\Testowe\save.bat" --dst="D:\POBRANE\Nowy folder"
+

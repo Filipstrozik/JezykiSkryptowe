@@ -1,0 +1,2 @@
+
+Pisać tak kompilowane programy żeby łatwo obslugiwac z linii komend.
