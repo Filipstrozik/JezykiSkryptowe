@@ -9,8 +9,6 @@ class MultipleAccumulate:
         self.data_list = data_list
         for arg in args:
             self.accumulate_functions.append(arg)
-        print(self.data_list)
-        print(self.accumulate_functions)
 
     def get_data(self):
         res = {}

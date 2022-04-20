@@ -16,5 +16,5 @@ class TextStats:
                 temp += 1
         self.number_of_noalpha = temp
 
-    def show(self):
-        print(f'lines: {self.number_of_lines},\nwords: {self.number_of_words},\nnonalpha: {self.number_of_noalpha},')
+    def __str__(self):
+        return f'lines: {self.number_of_lines},\nwords: {self.number_of_words},\nnonalpha: {self.number_of_noalpha},'
