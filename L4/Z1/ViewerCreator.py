@@ -1,5 +1,5 @@
 import mimetypes
-# from types import NoneType
+
 from FileViewer import FileViewer
 from ImageViewer import ImageViewer
 from TextViewer import TextViewer
@@ -21,7 +21,6 @@ class ViewerCreator:
         elif mime.__contains__('text'):
             return TextViewer
 
-
     def create_viewer(self, path):
         try:
             ins: FileViewer = self.__detect_viewer_type(path)(path)
@@ -29,4 +28,3 @@ class ViewerCreator:
         except TypeError:
             print(f'error with quessing type: {path}')
             return None
-

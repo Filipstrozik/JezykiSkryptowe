@@ -6,6 +6,7 @@ from ViewerCreator import ViewerCreator
 if __name__ == '__main__':
 
     pathpng = r'C:\Users\Filip Strózik\Documents\VPProjects\Activity Diagram1.png'
+    # pathpng = r'C:\Users\Filip Strózik\Downloads\macos.jpg'
     pathtxt = r'D:\MAIN\CODING\Sem 4\Testowe\kat1\test.txt'
 
     tv: TextViewer = ViewerCreator().create_viewer(pathtxt)
@@ -37,7 +38,11 @@ if __name__ == '__main__':
         return x * y
 
 
-    ma = MultipleAccumulate(arglist, add, subtract, multiply)
+    sum = lambda a, b: a + b
+    mul = lambda a, b: a * b
+    minus = lambda a, b: a - b
+
+    ma = MultipleAccumulate(arglist, sum, minus, multiply, mul)
     #print(ma.get_data())
     for sth in [tv, ma]:
         if sth is not None:
