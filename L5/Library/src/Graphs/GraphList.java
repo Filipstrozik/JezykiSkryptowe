@@ -1,7 +1,7 @@
 package Graphs;
 
 import java.util.Comparator;
-import java.util.LinkedList;
+import java.util.LinkedList; //TODO przerobic na arraylisty
 import java.util.PriorityQueue;
 
 public class GraphList implements Graph{
@@ -9,21 +9,23 @@ public class GraphList implements Graph{
     int vertices;
     LinkedList<Edge>[] adjacencylist;
 
-    static class Edge {
-        int src, dest, weight;
 
-        Edge(int src, int dest, int weight) {
-            this.src = src;
-            this.dest = dest;
-            this.weight = weight;
-        }
-    }
+//    class Edge {
+//        int src, dest, weight;
+//
+//        Edge(int src, int dest, int weight) {
+//            this.src = src;
+//            this.dest = dest;
+//            this.weight = weight;
+//        }
+//    }
 
     static class ResultSet {
         int parent;
         int weight;
     }
 
+    //Constructor
     public GraphList(int vertices) { //only undirected and weighted graphs
         this.vertices = vertices;
         adjacencylist = new LinkedList[vertices];
@@ -37,6 +39,13 @@ public class GraphList implements Graph{
     public void addEdge(int source, int destination, int weight) {
         Edge edge = new Edge(source, destination, weight);
         adjacencylist[source].addFirst(edge);
+//        edge = new Edge(destination, source, weight);
+//        adjacencylist[destination].addFirst(edge); //for undirected graph
+    }
+
+
+    public void addEdge(Edge ed) {
+        adjacencylist[ed.src].addFirst(ed);
 //        edge = new Edge(destination, source, weight);
 //        adjacencylist[destination].addFirst(edge); //for undirected graph
     }
