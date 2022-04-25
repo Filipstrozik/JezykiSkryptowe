@@ -1,70 +1,61 @@
 package Graphs;
 
-import java.util.Comparator;
-import java.util.LinkedList; //TODO przerobic na arraylisty
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 public class GraphList implements Graph{
 
     int vertices;
-    LinkedList<Edge>[] adjacencylist;
+    ArrayList<LinkedList<Edge>> adjacencylist;
+    ArrayList<Node> nodeList;
 
-
-//    class Edge {
-//        int src, dest, weight;
-//
-//        Edge(int src, int dest, int weight) {
-//            this.src = src;
-//            this.dest = dest;
-//            this.weight = weight;
-//        }
-//    }
 
     static class ResultSet {
         int parent;
         int weight;
     }
 
-    //Constructor
-    public GraphList(int vertices) { //only undirected and weighted graphs
-        this.vertices = vertices;
-        adjacencylist = new LinkedList[vertices];
-        //initialize adjacency lists for all the vertices
-        for (int i = 0; i < vertices; i++) {
-            adjacencylist[i] = new LinkedList<Edge>();
-        }
+
+    public GraphList(){
+        this.vertices = 0;
+        this.adjacencylist = new ArrayList<>();
+        this.nodeList = new ArrayList<>();
+    }
+
+    public void addNode(Node node){
+        this.nodeList.add(node);
+        this.adjacencylist.add(new LinkedList<>());
+        this.vertices+=1;
     }
 
     @Override
-    public void addEdge(int source, int destination, int weight) {
+    public void addEdge(Node source, Node destination, int weight) {
+        int idSource = nodeList.indexOf(source);
         Edge edge = new Edge(source, destination, weight);
-        adjacencylist[source].addFirst(edge);
+        adjacencylist.get(idSource).addFirst(edge);
 //        edge = new Edge(destination, source, weight);
 //        adjacencylist[destination].addFirst(edge); //for undirected graph
     }
 
 
-    public void addEdge(Edge ed) {
-        adjacencylist[ed.src].addFirst(ed);
-//        edge = new Edge(destination, source, weight);
-//        adjacencylist[destination].addFirst(edge); //for undirected graph
-    }
-
-    public boolean hasEdge(int source, int destination) {
-        LinkedList<Edge> list = adjacencylist[source];
-        for(int i = 0; i<list.size();i++){
-            if(list.get(i).dest== destination){
+    public boolean hasEdge(Node source, Node destination) {
+        int idSource = nodeList.indexOf(source);
+        LinkedList<Edge> list = adjacencylist.get(idSource);
+        for (Edge edge : list) {
+            if (edge.dest == destination) { // TODO chyba equals
                 return true;
             }
         }
         return false;
     }
 
-    public Integer getEdgeValue(int source, int destination) {
-        LinkedList<Edge> list = adjacencylist[source];
-        for(int i = 0; i<list.size();i++){
-            if(list.get(i).dest== destination){
-                return list.get(i).weight;
+    public Integer getEdgeValue(Node source, Node destination) {
+        int idSource = nodeList.indexOf(source);
+        LinkedList<Edge> list = adjacencylist.get(idSource);
+        for (Edge edge : list) {
+            if (edge.dest == destination) {
+                return edge.weight;
             }
         }
         return null;
@@ -74,10 +65,10 @@ public class GraphList implements Graph{
     @Override
     public void printGraph() {
         for (int i = 0; i < vertices; i++) {
-            LinkedList<Edge> list = adjacencylist[i];
-            System.out.print(i + ": ");
-            for (int j = 0; j < list.size(); j++) {
-                System.out.print(" -> [" + list.get(j).dest + "," + list.get(j).weight + "]");
+            LinkedList<Edge> list = adjacencylist.get(i);
+            System.out.print(nodeList.get(i) + ": ");
+            for (Edge edge : list) {
+                System.out.print(" -> [" + edge.dest + "," + edge.weight + "]");
             }
             System.out.println();
         }
@@ -85,9 +76,12 @@ public class GraphList implements Graph{
 
     @Override //this Dijkstra algorithm uses additional class Pair< , > which is implemented in javafx.util but i made an additional class
     // in order to omit problems with importing Pair form javafx
-    public void SSSP(int sourceVertex) {
+    public void SSSP(Node sourceNode) {
+        int sourceVertex = nodeList.indexOf(sourceNode);
+
+
         boolean[] spt = new boolean[vertices];
-        int dist[] = new int[vertices];
+        int[] dist = new int[vertices];
         int INFINITY = Integer.MAX_VALUE;
 
         //set distances to infinity
@@ -96,13 +90,10 @@ public class GraphList implements Graph{
         }
 
         // set up a prioryty queue, override comparator to sort it by the keys values.
-        PriorityQueue<Pair<Integer, Integer>> pq = new PriorityQueue<Pair<Integer, Integer>>(vertices, new Comparator<Pair<Integer, Integer>>() {
-            @Override
-            public int compare(Pair<Integer, Integer> o1, Pair<Integer, Integer> o2) {
-                int key1 = o1.getKey();
-                int key2 = o2.getKey();
-                return key1 - key2;
-            }
+        PriorityQueue<Pair<Integer, Integer>> pq = new PriorityQueue<Pair<Integer, Integer>>(vertices, (o1, o2) -> {
+            int key1 = o1.getKey();
+            int key2 = o2.getKey();
+            return key1 - key2;
         });
 
         //set source vertex distance to 0
@@ -119,12 +110,11 @@ public class GraphList implements Graph{
             if (!spt[extractedVertex]) {
                 spt[extractedVertex] = true;
 
-                LinkedList<Edge> listOfEdges = adjacencylist[extractedVertex];
+                LinkedList<Edge> listOfEdges = adjacencylist.get(extractedVertex);
 
                 //iterate through all the adjacent vertices and update the keys
-                for (int i = 0; i < listOfEdges.size(); i++) {
-                    Edge edge = listOfEdges.get(i);
-                    int destination = edge.dest;
+                for (Edge edge : listOfEdges) {
+                    int destination = nodeList.indexOf(edge.dest);
                     //if edge destination is not present in mst -> check if distance needs an update (total weight) if current val < total weight -> update
                     if (!spt[destination]) {
                         int newKey = dist[extractedVertex] + edge.weight;
@@ -144,7 +134,7 @@ public class GraphList implements Graph{
     public void printDijkstra(int[] distance, int sourceVertex) {
         System.out.println("Dijkstra Algorithm: (Adjacency List + Priority Queue)");
         for (int i = 0; i < vertices; i++) {
-            System.out.println("Source Vertex: " + sourceVertex + " to vertex " + +i +
+            System.out.println("Source Vertex: " + nodeList.get(sourceVertex) + " to vertex " + nodeList.get(i) +
                     " distance: " + distance[i]);
         }
     }
@@ -162,13 +152,10 @@ public class GraphList implements Graph{
             resultSet[i] = new ResultSet();
         }
 
-        PriorityQueue<Pair<Integer, Integer>> pq = new PriorityQueue<>(vertices, new Comparator<>() {
-            @Override
-            public int compare(Pair<Integer, Integer> o1, Pair<Integer, Integer> o2) {
-                int key1 = o1.getKey();
-                int key2 = o2.getKey();
-                return key1 - key2;
-            }
+        PriorityQueue<Pair<Integer, Integer>> pq = new PriorityQueue<>(vertices, (o1, o2) -> {
+            int key1 = o1.getKey();
+            int key2 = o2.getKey();
+            return key1 - key2;
         });
 
         //create the pair for for the first index, 0 key 0 index
@@ -188,14 +175,13 @@ public class GraphList implements Graph{
             int extractedVertex = extractedPair.getValue();
             mst[extractedVertex] = true;
 
-            LinkedList<Edge> list = adjacencylist[extractedVertex];
+            LinkedList<Edge> list = adjacencylist.get(extractedVertex);
             //iterate through all the adjacent vertices and update the keys
-            for (int i = 0; i < list.size(); i++) {
+            for (Edge edge : list) {
 
-                Edge edge = list.get(i);
                 //only if edge destination is not present in mst
-                if (!mst[edge.dest]) {
-                    int destination = edge.dest;
+                if (!mst[nodeList.indexOf(edge.dest)]) {
+                    int destination = nodeList.indexOf(edge.dest);
                     int newKey = edge.weight;
                     //check it current weight < existing weight, if yes, update it
                     if (key[destination] > newKey) {
@@ -218,7 +204,7 @@ public class GraphList implements Graph{
         int total_min_weight = 0;
         System.out.println("Minimum Spanning Tree (Prim's Algorithm) : ");
         for (int i = 1; i < vertices; i++) {
-            System.out.println("Edge: " + i + " - " + resultSet[i].parent +
+            System.out.println("Edge: " + nodeList.get(i) + " - " + nodeList.get(resultSet[i].parent) +
                     " key: " + resultSet[i].weight);
             total_min_weight += resultSet[i].weight;
         }
