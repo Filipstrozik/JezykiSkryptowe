@@ -1,8 +1,10 @@
 package Graphs;
 
+import py4j.GatewayServer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
+
 
 public class GraphList implements Graph{
 
@@ -11,9 +13,37 @@ public class GraphList implements Graph{
     ArrayList<Node> nodeList;
 
 
+
     static class ResultSet {
         int parent;
         int weight;
+    }
+
+    public static void main(String[] args) {
+        GraphList g = new GraphList();
+        GatewayServer server = new GatewayServer(g);
+        server.start();
+
+//        Node a = new Node("A");
+//        Node b = new Node("B");
+//        Node c = new Node("C");
+//        g.addNode(a);
+//        g.addNode(b);
+//        g.addNode(c);
+//        g.addEdge(a,b,2);
+//        g.addEdge(a,c,100);
+//        g.addEdge(b,c,5);
+//        g.printGraph();
+//
+//        System.out.println();
+//        g.SSSP(a);
+//        System.out.println();
+//        System.out.println(g.MST());
+
+    }
+
+    public Node getNode(String data){
+        return new Node(data);
     }
 
 
@@ -28,11 +58,26 @@ public class GraphList implements Graph{
         this.adjacencylist.add(new LinkedList<>());
         this.vertices+=1;
     }
+    public void addNode(String data){
+        this.nodeList.add(new Node(data));
+        this.adjacencylist.add(new LinkedList<>());
+        this.vertices+=1;
+    }
 
-    @Override
+
     public void addEdge(Node source, Node destination, int weight) {
         int idSource = nodeList.indexOf(source);
         Edge edge = new Edge(source, destination, weight);
+        adjacencylist.get(idSource).addFirst(edge);
+//        edge = new Edge(destination, source, weight);
+//        adjacencylist[destination].addFirst(edge); //for undirected graph
+    }
+    @Override
+    public void addEdge(String source, String destination, int weight) {
+        int idSource = nodeList.indexOf(new Node(source));
+        int idDest = nodeList.indexOf(new Node(destination));
+
+        Edge edge = new Edge(nodeList.get(idSource), nodeList.get(idDest), weight);
         adjacencylist.get(idSource).addFirst(edge);
 //        edge = new Edge(destination, source, weight);
 //        adjacencylist[destination].addFirst(edge); //for undirected graph
@@ -140,7 +185,7 @@ public class GraphList implements Graph{
     }
 
     @Override
-    public void MST() {
+    public String MST() {
         boolean[] mst = new boolean[vertices];
         ResultSet[] resultSet = new ResultSet[vertices];
         int[] key = new int[vertices];
@@ -197,17 +242,31 @@ public class GraphList implements Graph{
                 }
             }
         }
-        printMST(resultSet);
+        return printMST(resultSet);
     }
 
-    private void printMST(ResultSet[] resultSet) {
+    private String printMST(ResultSet[] resultSet) {
         int total_min_weight = 0;
-        System.out.println("Minimum Spanning Tree (Prim's Algorithm) : ");
+        StringBuilder result = new StringBuilder();
+        result.append("Minimum Spanning Tree (Prim's Algorithm) : \n");
+//        System.out.println("Minimum Spanning Tree (Prim's Algorithm) : ");
         for (int i = 1; i < vertices; i++) {
-            System.out.println("Edge: " + nodeList.get(i) + " - " + nodeList.get(resultSet[i].parent) +
-                    " key: " + resultSet[i].weight);
+            result.append("Edge: ").append(nodeList.get(i)).append(" - ").append(nodeList.get(resultSet[i].parent)).append(" key: ").append(resultSet[i].weight).append("\n");
+//            System.out.println("Edge: " + nodeList.get(i) + " - " + nodeList.get(resultSet[i].parent) +
+//                    " key: " + resultSet[i].weight);
             total_min_weight += resultSet[i].weight;
         }
-        System.out.println("Total minimum key: " + total_min_weight);
+        result.append("Total minimum key: ").append(total_min_weight).append("\n");
+        return result.toString();
+//        System.out.println("Total minimum key: " + total_min_weight);
+    }
+
+    @Override
+    public String toString() {
+        return "GraphList{" +
+                "vertices=" + vertices +
+                ", adjacencylist=" + adjacencylist +
+                ", nodeList=" + nodeList +
+                '}';
     }
 }

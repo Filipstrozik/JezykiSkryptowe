@@ -2,11 +2,11 @@ package Graphs;
 
 public interface Graph {
 
-    void addEdge(Node src, Node dest, int weight);
+    void addEdge(String src, String dest, int weight);
 
     void SSSP(Node sourceNode);
 
-    void MST();
+    String MST();
 
     void printGraph();
 

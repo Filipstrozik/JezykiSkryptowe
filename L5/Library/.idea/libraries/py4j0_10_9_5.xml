@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="py4j0.10.9.5">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/AppData/Local/Programs/Python/Python39/share/py4j/py4j0.10.9.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

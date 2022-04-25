@@ -13,4 +13,13 @@ public class Edge {
     void changeWeight(int weight){
         this.weight = weight;
     }
+
+    @Override
+    public String toString() {
+        return "Edge{" +
+                "src=" + src +
+                ", dest=" + dest +
+                ", weight=" + weight +
+                '}';
+    }
 }
