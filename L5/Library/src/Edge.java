@@ -1,4 +1,3 @@
-package Graphs;
 
 public class Edge {
     Node src, dest;

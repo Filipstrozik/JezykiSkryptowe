@@ -1,4 +1,3 @@
-package Graphs;
 
 import py4j.GatewayServer;
 import java.util.ArrayList;
@@ -7,7 +6,7 @@ import java.util.PriorityQueue;
 
 
 public class GraphList implements Graph{
-
+    private static GatewayServer server;
     int vertices;
     ArrayList<LinkedList<Edge>> adjacencylist;
     ArrayList<Node> nodeList;
@@ -21,25 +20,14 @@ public class GraphList implements Graph{
 
     public static void main(String[] args) {
         GraphList g = new GraphList();
-        GatewayServer server = new GatewayServer(g);
+        server = new GatewayServer(g);
         server.start();
 
-//        Node a = new Node("A");
-//        Node b = new Node("B");
-//        Node c = new Node("C");
-//        g.addNode(a);
-//        g.addNode(b);
-//        g.addNode(c);
-//        g.addEdge(a,b,2);
-//        g.addEdge(a,c,100);
-//        g.addEdge(b,c,5);
-//        g.printGraph();
-//
-//        System.out.println();
-//        g.SSSP(a);
-//        System.out.println();
-//        System.out.println(g.MST());
+    }
 
+    public void stop(){
+        server.shutdown();
+        System.exit(0);
     }
 
     public Node getNode(String data){
