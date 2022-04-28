@@ -15,7 +15,8 @@ g1.addEdge('B', 'C', 50)
 
 g1.print()
 
-g1.setEdgeWeight('A', 'B', 10)
+# g1.removeEdge('A','B')
+g1.removeNode('C')
 
 g1.print()
 

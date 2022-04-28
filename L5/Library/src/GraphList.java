@@ -4,7 +4,7 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 
-public class GraphList implements Graph{
+public class GraphList implements Graph {
 
     int vertices;
     ArrayList<LinkedList<Edge>> adjacencylist;
@@ -16,35 +16,68 @@ public class GraphList implements Graph{
         int weight;
     }
 
-    public GraphList(){
+    public GraphList() {
         this.vertices = 0;
         this.adjacencylist = new ArrayList<>();
         this.nodeList = new ArrayList<>();
     }
 
-    public Node getNode(String data){
+    public Node getNode(String data) {
         return new Node(data);
     }
 
-    public void addNode(String data){
-        if (getIndexOfNode(data) == -1){
+    public void addNode(String data) {
+        if (getIndexOfNode(data) == -1) {
             this.nodeList.add(new Node(data));
             this.adjacencylist.add(new LinkedList<>());
-            this.vertices+=1;
+            this.vertices += 1;
         }
     }
 
     //TODO: eraseNode(String data) -> musisz usunac tez wszytskie krawedzie ktore maja go za dest
     //TODO: oprcz tego że usuwasz Linked Liste
     //TODO: zatem też usuwanie krawędzi eraseEdge(String src, String dest)
+    public void removeEdge(String src, String dest) {
+        if (hasEdge(src, dest)) {
+            int idSource = getIndexOfNode(src);
+            int idEdge = 0;
+            LinkedList<Edge> list = adjacencylist.get(idSource);
+            for (Edge edge : list) {
+                if (edge.dest.data.equals(dest)) {
+                    idEdge = list.indexOf(edge);
+                    break;
+                }
+            }
+            list.remove(idEdge);
+        }
+    }
 
-    private Integer getIndexOfNode(String nodeData){
+
+    public void removeNode(String data) {
+        int idToRemove = getIndexOfNode(data);
+        if (idToRemove != -1){
+            for (LinkedList<Edge> lista : adjacencylist) {
+                for (Edge edge : lista) {
+                    if(edge.dest.data.equals(data)){
+                        removeEdge(edge.src.data, edge.dest.data);
+                        break;
+                    }
+                }
+            }
+            adjacencylist.remove(idToRemove);
+            nodeList.remove(idToRemove);
+            vertices--;
+        }
+
+    }
+
+    private Integer getIndexOfNode(String nodeData) {
         int id = 0;
-        for (Node node: nodeList){
-            if(node.data.equals(nodeData)){
+        for (Node node : nodeList) {
+            if (node.data.equals(nodeData)) {
                 return id;
             }
-            id +=1;
+            id += 1;
         }
         return -1;
     }
@@ -58,11 +91,11 @@ public class GraphList implements Graph{
     }
 
 
-    public boolean hasEdge(Node source, Node destination) {
-        int idSource = nodeList.indexOf(source);
+    public boolean hasEdge(String source, String destination) {
+        int idSource = getIndexOfNode(source);
         LinkedList<Edge> list = adjacencylist.get(idSource);
         for (Edge edge : list) {
-            if (edge.dest == destination) {
+            if (edge.dest.data.equals(destination)) {
                 return true;
             }
         }
@@ -81,7 +114,7 @@ public class GraphList implements Graph{
     }
 
     public void setEdgeWeight(String source, String destination, int nWeight) {
-        if(getIndexOfNode(source) != -1){
+        if (getIndexOfNode(source) != -1) {
             LinkedList<Edge> list = adjacencylist.get(getIndexOfNode(source));
             for (Edge edge : list) {
                 if (edge.dest.data.equals(destination)) {
@@ -106,7 +139,8 @@ public class GraphList implements Graph{
         return result.toString();
     }
 
-    @Override //this Dijkstra algorithm uses additional class Pair< , > which is implemented in javafx.util but i made an additional class
+    @Override
+    //this Dijkstra algorithm uses additional class Pair< , > which is implemented in javafx.util but i made an additional class
     // in order to omit problems with importing Pair form javafx
     public String SSSP(String sourceNode) {
         int sourceVertex = getIndexOfNode(sourceNode);

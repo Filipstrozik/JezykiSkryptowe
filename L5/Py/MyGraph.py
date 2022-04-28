@@ -16,10 +16,14 @@ class MyGraph:
     def addNode(self, data):
         self.graph.addNode(data)
 
-
+    def removeNode(self, data):
+        self.graph.removeNode(data)
 
     def addEdge(self, src, dest, weight):
         self.graph.addEdge(src, dest, weight)
+
+    def removeEdge(self, src, dest):
+        self.graph.removeEdge(src, dest)
 
     def getEdgeWeight(self, src, dest):
         return self.graph.getEdgeWeight(src, dest)
