@@ -1,0 +1,61 @@
+# import graphs
+from MyGraph import MyGraph
+
+g1 = MyGraph()
+g2 = MyGraph()
+
+g1.addNode('A')
+g1.addNode('B')
+g1.addNode('C')
+g1.addNode('D')
+
+g1.addEdge('A', 'B', 100)
+g1.addEdge('A', 'C', 200)
+g1.addEdge('B', 'C', 50)
+
+g1.print()
+
+g1.setEdgeWeight('A', 'B', 10)
+
+g1.print()
+
+
+g1.MST()
+g1.SSSP('A')
+
+
+g2.addNode('A')
+g2.addNode('B')
+g2.addNode('C')
+
+g2.addEdge('A', 'C', 100)
+g2.addEdge('B', 'C', 200)
+g2.addEdge('B', 'A', 50)
+g2.addEdge('C', 'A', 10)
+g2.addEdge('C', 'B', 1)
+
+
+g2.print()
+
+g2.MST()
+g2.SSSP('C')
+
+
+
+
+# graphs.start()
+# graphs.help()
+#
+# g1 = graphs.newGraph()
+#
+# g2 = g1.getGraph()
+# g3 = g1.getGraph()
+
+
+# g = graphs.newGraph()
+
+#
+# print(g.MST())
+#
+# print(g)
+#

@@ -1,16 +1,14 @@
 
-import py4j.GatewayServer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 
 public class GraphList implements Graph{
-    private static GatewayServer server;
+
     int vertices;
     ArrayList<LinkedList<Edge>> adjacencylist;
     ArrayList<Node> nodeList;
-
 
 
     static class ResultSet {
@@ -18,55 +16,43 @@ public class GraphList implements Graph{
         int weight;
     }
 
-    public static void main(String[] args) {
-        GraphList g = new GraphList();
-        server = new GatewayServer(g);
-        server.start();
-
-    }
-
-    public void stop(){
-        server.shutdown();
-        System.exit(0);
-    }
-
-    public Node getNode(String data){
-        return new Node(data);
-    }
-
-
     public GraphList(){
         this.vertices = 0;
         this.adjacencylist = new ArrayList<>();
         this.nodeList = new ArrayList<>();
     }
 
-    public void addNode(Node node){
-        this.nodeList.add(node);
-        this.adjacencylist.add(new LinkedList<>());
-        this.vertices+=1;
+    public Node getNode(String data){
+        return new Node(data);
     }
+
     public void addNode(String data){
-        this.nodeList.add(new Node(data));
-        this.adjacencylist.add(new LinkedList<>());
-        this.vertices+=1;
+        if (getIndexOfNode(data) == -1){
+            this.nodeList.add(new Node(data));
+            this.adjacencylist.add(new LinkedList<>());
+            this.vertices+=1;
+        }
     }
 
+    //TODO: eraseNode(String data) -> musisz usunac tez wszytskie krawedzie ktore maja go za dest
+    //TODO: oprcz tego że usuwasz Linked Liste
+    //TODO: zatem też usuwanie krawędzi eraseEdge(String src, String dest)
 
-    public void addEdge(Node source, Node destination, int weight) {
-        int idSource = nodeList.indexOf(source);
-        Edge edge = new Edge(source, destination, weight);
-        adjacencylist.get(idSource).addFirst(edge);
-//        edge = new Edge(destination, source, weight);
-//        adjacencylist[destination].addFirst(edge); //for undirected graph
+    private Integer getIndexOfNode(String nodeData){
+        int id = 0;
+        for (Node node: nodeList){
+            if(node.data.equals(nodeData)){
+                return id;
+            }
+            id +=1;
+        }
+        return -1;
     }
+
     @Override
     public void addEdge(String source, String destination, int weight) {
-        int idSource = nodeList.indexOf(new Node(source));
-        int idDest = nodeList.indexOf(new Node(destination));
-
-        Edge edge = new Edge(nodeList.get(idSource), nodeList.get(idDest), weight);
-        adjacencylist.get(idSource).addFirst(edge);
+        Edge edge = new Edge(nodeList.get(getIndexOfNode(source)), nodeList.get(getIndexOfNode(destination)), weight);
+        adjacencylist.get(getIndexOfNode(source)).addFirst(edge);
 //        edge = new Edge(destination, source, weight);
 //        adjacencylist[destination].addFirst(edge); //for undirected graph
     }
@@ -76,41 +62,54 @@ public class GraphList implements Graph{
         int idSource = nodeList.indexOf(source);
         LinkedList<Edge> list = adjacencylist.get(idSource);
         for (Edge edge : list) {
-            if (edge.dest == destination) { // TODO chyba equals
+            if (edge.dest == destination) {
                 return true;
             }
         }
         return false;
     }
 
-    public Integer getEdgeValue(Node source, Node destination) {
-        int idSource = nodeList.indexOf(source);
+    public Integer getEdgeWeight(String source, String destination) {
+        int idSource = getIndexOfNode(source);
         LinkedList<Edge> list = adjacencylist.get(idSource);
         for (Edge edge : list) {
-            if (edge.dest == destination) {
+            if (edge.dest.data.equals(destination)) {
                 return edge.weight;
             }
         }
         return null;
     }
 
+    public void setEdgeWeight(String source, String destination, int nWeight) {
+        if(getIndexOfNode(source) != -1){
+            LinkedList<Edge> list = adjacencylist.get(getIndexOfNode(source));
+            for (Edge edge : list) {
+                if (edge.dest.data.equals(destination)) {
+                    edge.changeWeight(nWeight);
+                }
+            }
+        }
+    }
+
 
     @Override
-    public void printGraph() {
+    public String printGraph() {
+        StringBuilder result = new StringBuilder();
         for (int i = 0; i < vertices; i++) {
             LinkedList<Edge> list = adjacencylist.get(i);
-            System.out.print(nodeList.get(i) + ": ");
+            result.append(nodeList.get(i)).append(": ");
             for (Edge edge : list) {
-                System.out.print(" -> [" + edge.dest + "," + edge.weight + "]");
+                result.append(" -> [").append(edge.dest).append(",").append(edge.weight).append("]");
             }
-            System.out.println();
+            result.append("\n");
         }
+        return result.toString();
     }
 
     @Override //this Dijkstra algorithm uses additional class Pair< , > which is implemented in javafx.util but i made an additional class
     // in order to omit problems with importing Pair form javafx
-    public void SSSP(Node sourceNode) {
-        int sourceVertex = nodeList.indexOf(sourceNode);
+    public String SSSP(String sourceNode) {
+        int sourceVertex = getIndexOfNode(sourceNode);
 
 
         boolean[] spt = new boolean[vertices];
@@ -161,15 +160,16 @@ public class GraphList implements Graph{
                 }
             }
         }
-        printDijkstra(dist, sourceVertex);
+        return printDijkstra(dist, sourceVertex);
     }
 
-    public void printDijkstra(int[] distance, int sourceVertex) {
-        System.out.println("Dijkstra Algorithm: (Adjacency List + Priority Queue)");
+    public String printDijkstra(int[] distance, int sourceVertex) {
+        StringBuilder result = new StringBuilder();
+        result.append("Dijkstra Algorithm: (Adjacency List + Priority Queue) :\n");
         for (int i = 0; i < vertices; i++) {
-            System.out.println("Source Vertex: " + nodeList.get(sourceVertex) + " to vertex " + nodeList.get(i) +
-                    " distance: " + distance[i]);
+            result.append("Source Vertex: ").append(nodeList.get(sourceVertex)).append(" to vertex ").append(nodeList.get(i)).append(" distance: ").append(distance[i]).append("\n");
         }
+        return result.toString();
     }
 
     @Override
@@ -237,24 +237,20 @@ public class GraphList implements Graph{
         int total_min_weight = 0;
         StringBuilder result = new StringBuilder();
         result.append("Minimum Spanning Tree (Prim's Algorithm) : \n");
-//        System.out.println("Minimum Spanning Tree (Prim's Algorithm) : ");
         for (int i = 1; i < vertices; i++) {
             result.append("Edge: ").append(nodeList.get(i)).append(" - ").append(nodeList.get(resultSet[i].parent)).append(" key: ").append(resultSet[i].weight).append("\n");
-//            System.out.println("Edge: " + nodeList.get(i) + " - " + nodeList.get(resultSet[i].parent) +
-//                    " key: " + resultSet[i].weight);
             total_min_weight += resultSet[i].weight;
         }
         result.append("Total minimum key: ").append(total_min_weight).append("\n");
         return result.toString();
-//        System.out.println("Total minimum key: " + total_min_weight);
     }
 
     @Override
     public String toString() {
         return "GraphList{" +
-                "vertices=" + vertices +
-                ", adjacencylist=" + adjacencylist +
-                ", nodeList=" + nodeList +
+                "\nvertices=" + vertices +
+                ",\nadjacencylist=" + adjacencylist +
+                ",\nnodeList=" + nodeList +
                 '}';
     }
 }
