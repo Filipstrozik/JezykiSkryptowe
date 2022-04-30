@@ -34,9 +34,6 @@ public class GraphList implements Graph {
         }
     }
 
-    //TODO: eraseNode(String data) -> musisz usunac tez wszytskie krawedzie ktore maja go za dest
-    //TODO: oprcz tego że usuwasz Linked Liste
-    //TODO: zatem też usuwanie krawędzi eraseEdge(String src, String dest)
     public void removeEdge(String src, String dest) {
         if (hasEdge(src, dest)) {
             int idSource = getIndexOfNode(src);
@@ -84,8 +81,10 @@ public class GraphList implements Graph {
 
     @Override
     public void addEdge(String source, String destination, int weight) {
-        Edge edge = new Edge(nodeList.get(getIndexOfNode(source)), nodeList.get(getIndexOfNode(destination)), weight);
-        adjacencylist.get(getIndexOfNode(source)).addFirst(edge);
+        if(!hasEdge(source, destination)){
+            Edge edge = new Edge(nodeList.get(getIndexOfNode(source)), nodeList.get(getIndexOfNode(destination)), weight);
+            adjacencylist.get(getIndexOfNode(source)).addFirst(edge);
+        }
 //        edge = new Edge(destination, source, weight);
 //        adjacencylist[destination].addFirst(edge); //for undirected graph
     }
