@@ -1,6 +1,4 @@
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.PriorityQueue;
+import java.util.*;
 
 
 public class GraphList implements Graph {
@@ -273,6 +271,60 @@ public class GraphList implements Graph {
             total_min_weight += resultSet[i].weight;
         }
         result.append("Total minimum key: ").append(total_min_weight).append("\n");
+        return result.toString();
+    }
+
+    public String DFS(String sourceNode) {
+        int sourceVertex = getIndexOfNode(sourceNode);
+        boolean[] dfs = new boolean[vertices];
+        Stack<Node> stack = new Stack<>();
+        StringBuilder result = new StringBuilder();
+        result.append("DFS: source node :").append(sourceNode).append("\n");
+
+        stack.push(nodeList.get(sourceVertex));
+
+        while (!stack.isEmpty()) {
+            Node curNode = stack.pop();
+            if (!dfs[nodeList.indexOf(curNode)]) {
+                dfs[nodeList.indexOf(curNode)] = true;
+                result.append(curNode).append(" ");
+
+                LinkedList<Edge> list = adjacencylist.get(nodeList.indexOf(curNode));
+
+                for (Edge edge : list) {
+                    stack.push(edge.dest);
+                }
+
+            }
+        }
+
+        return result.toString();
+    }
+
+    public String BFS(String sourceNode) {
+        int sourceVertex = getIndexOfNode(sourceNode);
+        boolean[] bfs = new boolean[vertices];
+        Queue<Node> queue = new LinkedList<>();
+        StringBuilder result = new StringBuilder();
+        result.append("BFS: source node :").append(sourceNode).append("\n");
+
+        queue.offer(nodeList.get(sourceVertex));
+
+        while (!queue.isEmpty()) {
+            Node curNode = queue.poll();
+            if (!bfs[nodeList.indexOf(curNode)]) {
+                bfs[nodeList.indexOf(curNode)] = true;
+                result.append(curNode).append(" ");
+
+                LinkedList<Edge> list = adjacencylist.get(nodeList.indexOf(curNode));
+
+                for (Edge edge : list) {
+                    queue.offer(edge.dest);
+                }
+
+            }
+        }
+
         return result.toString();
     }
 

@@ -37,6 +37,12 @@ class MyGraph:
     def MST(self):
         print(self.graph.MST())
 
+    def DFS(self, src):
+        print(self.graph.DFS(src))
+
+    def BFS(self, src):
+        print(self.graph.BFS(src))
+
     def print(self):
         print(self.graph.printGraph())
 
