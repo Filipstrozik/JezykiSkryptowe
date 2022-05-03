@@ -1,4 +1,3 @@
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
@@ -10,7 +9,7 @@ public class GraphList implements Graph {
     ArrayList<LinkedList<Edge>> adjacencylist;
     ArrayList<Node> nodeList;
 
-
+    //used for MST
     static class ResultSet {
         int parent;
         int weight;
@@ -52,10 +51,10 @@ public class GraphList implements Graph {
 
     public void removeNode(String data) {
         int idToRemove = getIndexOfNode(data);
-        if (idToRemove != -1){
+        if (idToRemove != -1) {
             for (LinkedList<Edge> lista : adjacencylist) {
                 for (Edge edge : lista) {
-                    if(edge.dest.data.equals(data)){
+                    if (edge.dest.data.equals(data)) {
                         removeEdge(edge.src.data, edge.dest.data);
                         break;
                     }
@@ -81,12 +80,10 @@ public class GraphList implements Graph {
 
     @Override
     public void addEdge(String source, String destination, int weight) {
-        if(!hasEdge(source, destination)){
+        if (!hasEdge(source, destination)) {
             Edge edge = new Edge(nodeList.get(getIndexOfNode(source)), nodeList.get(getIndexOfNode(destination)), weight);
             adjacencylist.get(getIndexOfNode(source)).addFirst(edge);
         }
-//        edge = new Edge(destination, source, weight);
-//        adjacencylist[destination].addFirst(edge); //for undirected graph
     }
 
 
@@ -141,9 +138,9 @@ public class GraphList implements Graph {
     @Override
     //this Dijkstra algorithm uses additional class Pair< , > which is implemented in javafx.util but i made an additional class
     // in order to omit problems with importing Pair form javafx
+    //Single Source Shortest Path
     public String SSSP(String sourceNode) {
         int sourceVertex = getIndexOfNode(sourceNode);
-
 
         boolean[] spt = new boolean[vertices];
         int[] dist = new int[vertices];
@@ -206,6 +203,7 @@ public class GraphList implements Graph {
     }
 
     @Override
+    //Minimum Spanning Tree
     public String MST() {
         boolean[] mst = new boolean[vertices];
         ResultSet[] resultSet = new ResultSet[vertices];

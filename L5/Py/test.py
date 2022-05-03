@@ -42,21 +42,3 @@ g2.MST()
 g2.SSSP('C')
 
 
-
-
-# graphs.start()
-# graphs.help()
-#
-# g1 = graphs.newGraph()
-#
-# g2 = g1.getGraph()
-# g3 = g1.getGraph()
-
-
-# g = graphs.newGraph()
-
-#
-# print(g.MST())
-#
-# print(g)
-#
