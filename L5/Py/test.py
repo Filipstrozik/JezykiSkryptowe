@@ -1,4 +1,4 @@
-# import graphs
+
 from MyGraph import MyGraph
 
 g1 = MyGraph()
@@ -26,7 +26,6 @@ g2.SSSP('B')
 g2.DFS('C')
 g2.BFS('C')
 
-
 g1.addNode('A')
 g1.addNode('B')
 g1.addNode('C')
@@ -39,7 +38,7 @@ g1.addEdge('B', 'C', 50)
 g1.print()
 g1.DFS('A')
 
-g1.removeEdge('A','B')
+g1.removeEdge('A', 'B')
 g1.removeNode('C')
 
 g1.print()
@@ -59,5 +58,3 @@ g1.print()
 
 g1.MST('A')
 g1.SSSP('A')
-
-
