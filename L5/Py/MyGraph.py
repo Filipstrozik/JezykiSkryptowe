@@ -13,6 +13,9 @@ class MyGraph:
     def addNode(self, data):
         self.graph.addNode(data)
 
+    def setNodeLabel(self, oldLabel, newLabel):
+        self.graph.setNodeLabel(oldLabel, newLabel)
+
     def removeNode(self, data):
         self.graph.removeNode(data)
 
@@ -34,8 +37,8 @@ class MyGraph:
     def SSSP(self, src):
         print(self.graph.SSSP(src))
 
-    def MST(self):
-        print(self.graph.MST())
+    def MST(self, src):
+        print(self.graph.MST(src))
 
     def DFS(self, src):
         print(self.graph.DFS(src))

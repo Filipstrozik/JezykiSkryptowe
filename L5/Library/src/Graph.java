@@ -5,7 +5,7 @@ public interface Graph {
 
     String SSSP(String sourceNode);
 
-    String MST();
+    String MST(String sourceNode);
 
     String printGraph();
 

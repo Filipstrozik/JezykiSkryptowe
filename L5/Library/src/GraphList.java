@@ -19,8 +19,10 @@ public class GraphList implements Graph {
         this.nodeList = new ArrayList<>();
     }
 
-    public Node getNode(String data) {
-        return new Node(data);
+    public void setNodeLabel(String oldLabel, String newLabel) {
+        if(getIndexOfNode(oldLabel) != -1){
+            nodeList.get(getIndexOfNode(oldLabel)).changeData(newLabel);
+        }
     }
 
     public void addNode(String data) {
@@ -175,7 +177,7 @@ public class GraphList implements Graph {
                 //iterate through all the adjacent vertices and update the keys
                 for (Edge edge : listOfEdges) {
                     int destination = nodeList.indexOf(edge.dest);
-                    //if edge destination is not present in mst -> check if distance needs an update (total weight) if current val < total weight -> update
+                    //if edge destination is not present in spt -> check if distance needs an update (total weight) if current val < total weight -> update
                     if (!spt[destination]) {
                         int newKey = dist[extractedVertex] + edge.weight;
                         int currentKey = dist[destination];
@@ -202,7 +204,8 @@ public class GraphList implements Graph {
 
     @Override
     //Minimum Spanning Tree
-    public String MST() {
+    public String MST(String sourceNode) {
+        int sourceVertex = getIndexOfNode(sourceNode);
         boolean[] mst = new boolean[vertices];
         ResultSet[] resultSet = new ResultSet[vertices];
         int[] key = new int[vertices];
@@ -212,6 +215,7 @@ public class GraphList implements Graph {
         for (int i = 0; i < vertices; i++) {
             key[i] = Integer.MAX_VALUE;
             resultSet[i] = new ResultSet();
+            resultSet[i].weight = Integer.MAX_VALUE;
         }
 
         PriorityQueue<Pair<Integer, Integer>> pq = new PriorityQueue<>(vertices, (o1, o2) -> {
@@ -221,13 +225,14 @@ public class GraphList implements Graph {
         });
 
         //create the pair for for the first index, 0 key 0 index
-        key[0] = 0;
-        Pair<Integer, Integer> p0 = new Pair<>(key[0], 0);
+        //0
+        key[sourceVertex] = 0;
+        Pair<Integer, Integer> p0 = new Pair<>(key[sourceVertex], sourceVertex);
 
         pq.offer(p0);
 
-        resultSet[0] = new ResultSet();
-        resultSet[0].parent = -1;
+        resultSet[sourceVertex] = new ResultSet();
+        resultSet[sourceVertex].parent = sourceVertex;
 
 
         while (!pq.isEmpty()) {
@@ -235,26 +240,28 @@ public class GraphList implements Graph {
             Pair<Integer, Integer> extractedPair = pq.poll();
 
             int extractedVertex = extractedPair.getValue();
-            mst[extractedVertex] = true;
+            if(!mst[extractedVertex]){
+                mst[extractedVertex] = true;
 
-            LinkedList<Edge> list = adjacencylist.get(extractedVertex);
-            //iterate through all the adjacent vertices and update the keys
-            for (Edge edge : list) {
+                LinkedList<Edge> list = adjacencylist.get(extractedVertex);
+                //iterate through all the adjacent vertices and update the keys
+                for (Edge edge : list) {
 
-                //only if edge destination is not present in mst
-                if (!mst[nodeList.indexOf(edge.dest)]) {
-                    int destination = nodeList.indexOf(edge.dest);
-                    int newKey = edge.weight;
-                    //check it current weight < existing weight, if yes, update it
-                    if (key[destination] > newKey) {
-                        //add it to the priority queue
-                        Pair<Integer, Integer> p = new Pair<>(newKey, destination);
-                        pq.offer(p);
-                        //update the resultSet for destination vertex
-                        resultSet[destination].parent = extractedVertex;
-                        resultSet[destination].weight = newKey;
-                        //update the key
-                        key[destination] = newKey;
+                    //only if edge destination is not present in mst
+                    if (!mst[nodeList.indexOf(edge.dest)]) {
+                        int destination = nodeList.indexOf(edge.dest);
+                        int newKey = edge.weight;
+                        //check it current weight < existing weight, if yes, update it
+                        if (key[destination] > newKey) {
+                            //add it to the priority queue
+                            Pair<Integer, Integer> p = new Pair<>(newKey, destination);
+                            pq.offer(p);
+                            //update the resultSet for destination vertex
+                            resultSet[destination].parent = extractedVertex;
+                            resultSet[destination].weight = newKey;
+                            //update the key
+                            key[destination] = newKey;
+                        }
                     }
                 }
             }
@@ -266,9 +273,11 @@ public class GraphList implements Graph {
         int total_min_weight = 0;
         StringBuilder result = new StringBuilder();
         result.append("Minimum Spanning Tree (Prim's Algorithm) : \n");
-        for (int i = 1; i < vertices; i++) {
-            result.append("Edge: ").append(nodeList.get(i)).append(" - ").append(nodeList.get(resultSet[i].parent)).append(" key: ").append(resultSet[i].weight).append("\n");
-            total_min_weight += resultSet[i].weight;
+        for (int i = 0; i < vertices; i++) {
+            if(!nodeList.get(i).equals(nodeList.get(resultSet[i].parent))){
+                result.append("Edge: ").append(nodeList.get(resultSet[i].parent)).append(" - ").append(nodeList.get(i)).append(" key: ").append(resultSet[i].weight).append("\n");
+                total_min_weight += resultSet[i].weight;
+            }
         }
         result.append("Total minimum key: ").append(total_min_weight).append("\n");
         return result.toString();
@@ -279,7 +288,7 @@ public class GraphList implements Graph {
         boolean[] dfs = new boolean[vertices];
         Stack<Node> stack = new Stack<>();
         StringBuilder result = new StringBuilder();
-        result.append("DFS: source node :").append(sourceNode).append("\n");
+        result.append("DFS: source node : ").append(sourceNode).append("\n");
 
         stack.push(nodeList.get(sourceVertex));
 
@@ -297,7 +306,7 @@ public class GraphList implements Graph {
 
             }
         }
-
+        result.append("\n");
         return result.toString();
     }
 
@@ -306,7 +315,7 @@ public class GraphList implements Graph {
         boolean[] bfs = new boolean[vertices];
         Queue<Node> queue = new LinkedList<>();
         StringBuilder result = new StringBuilder();
-        result.append("BFS: source node :").append(sourceNode).append("\n");
+        result.append("BFS: source node : ").append(sourceNode).append("\n");
 
         queue.offer(nodeList.get(sourceVertex));
 
@@ -324,7 +333,7 @@ public class GraphList implements Graph {
 
             }
         }
-
+        result.append("\n");
         return result.toString();
     }
 
