@@ -1,3 +1,4 @@
+from pathlib import Path
 from tkinter import Tk
 
 from view import View
@@ -14,6 +15,7 @@ class Controller:
 
         pub.subscribe(self.showpath_btn_pressed, "ShowPath_Button_Pressed")
         pub.subscribe(self.createdir_btn_pressed, "CreateNewDir_Button_Pressed")
+        pub.subscribe(self.cleanup_btn_pressed, "CleanUp_Button_Pressed")
 
     def createdir_btn_pressed(self, arg):
         print("controller  - createNewDir btn pressed")
@@ -23,8 +25,13 @@ class Controller:
         print("controller  - showpath btn pressed")
         self.model.showPath()
 
+    def cleanup_btn_pressed(self, arg1, arg2):
+        print("controller  - cleanup btn pressed")
+        self.model.cleanup(arg1, arg2)
 
 if __name__ == "__main__":
+    print(Path.home() / 'Desktop')
+
     root = Tk()
     WIDTH = 600
     HEIGHT = 400

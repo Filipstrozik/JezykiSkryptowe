@@ -2,7 +2,7 @@ import os
 import tkinter as tk
 from tkinter import messagebox, ttk
 from tkinter import *
-
+from pathlib import Path
 from pubsub import pub
 
 
@@ -19,12 +19,16 @@ class View:
 
         self.main_side = tk.Frame(self.container)
         self.right_side = tk.Frame(self.container)
+
         self.button = tk.Button(self.right_side, text="SHOW PATH", command=self.showPath)
 
-        self.newNameTextBox = tk.Text(self.right_side, height=3, width=10)
+        self.newDirecoryLabel = tk.Label(self.right_side, text="new directory", height=1)
+        self.newNameTextBox = tk.Text(self.right_side, height=1, width=20)
+
         self.btnCreateDir = tk.Button(self.right_side, text="create new directory", command=self.createNewDir)
 
-        self.label = tk.Label(self.container, text="prawa strona", font=100)
+        self.clean_up_label = tk.Label(self.right_side, text="cleanup", height=1)
+        self.clean_up_button = tk.Button(self.right_side, text="clean", command=self.clean_up)
 
         self.left_side = tk.Frame(self.container)
 
@@ -50,14 +54,23 @@ class View:
                 id = self.tv.insert(parent, 'end', text=f'{d}', open=False)
                 self.traverse_dir(id, full_path)
 
+    def update_dir(self, parent, path):
+        pass
+
     def setup_layout(self):
 
         self.ybar.pack(side='right', fill=tk.Y)
         self.tv.pack(side='left')
         self.left_side.pack(side='left')
-        self.newNameTextBox.pack(side='right')
-        self.button.pack(side="right")
-        self.btnCreateDir.pack(side="right")
+
+        self.newDirecoryLabel.pack(side='top')
+        self.newNameTextBox.pack(side='top')
+        self.button.pack()
+        self.btnCreateDir.pack()
+
+        self.clean_up_label.pack()
+        self.clean_up_button.pack()
+
         self.right_side.pack(side='right')
 
     def showPath(self):  # redundancja
@@ -88,11 +101,16 @@ class View:
     def createNewDir(self):
         newDirPath = os.path.join(self.getSelectedPath(), self.newNameTextBox.get("1.0",'end-1c'))
         pub.sendMessage("CreateNewDir_Button_Pressed", arg=newDirPath)
-        self.traverse_dir(self.node, self.path)
 
+    def clean_up(self):
+        print(Path(self.getSelectedPath()))
+        print(type(Path(self.getSelectedPath())))
+
+        pub.sendMessage("CleanUp_Button_Pressed", arg1=Path(self.getSelectedPath()),arg2 = (Path(self.getSelectedPath()) / 'Cleaned'))
 
 
 if __name__ == "__main__":
+
     root = Tk()
     WIDTH = 600
     HEIGHT = 400
