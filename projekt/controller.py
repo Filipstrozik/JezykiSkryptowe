@@ -25,15 +25,13 @@ class Controller:
         print("controller  - showpath btn pressed")
         self.model.showPath()
 
-    def cleanup_btn_pressed(self, arg1, arg2):
+    def cleanup_btn_pressed(self, arg1, arg2, deep):
         print("controller  - cleanup btn pressed")
-        self.model.cleanup(arg1, arg2)
+        self.model.cleanup(arg1, arg2, deep)
 
 if __name__ == "__main__":
-    print(Path.home() / 'Desktop')
-
     root = Tk()
-    WIDTH = 600
+    WIDTH = 800
     HEIGHT = 400
     root.geometry("%sx%s" % (WIDTH, HEIGHT))
     root.title("Deskonizer")

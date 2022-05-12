@@ -28,6 +28,10 @@ class View:
         self.btnCreateDir = tk.Button(self.right_side, text="create new directory", command=self.createNewDir)
 
         self.clean_up_label = tk.Label(self.right_side, text="cleanup", height=1)
+        #checkbox for recursive cleaning folders,
+        self.recursive_clean_up_var = tk.IntVar()
+        self.recursive_clean_up_checkbox = tk.Checkbutton(self.right_side, text='deep clean up', variable=self.recursive_clean_up_var, onvalue=1, offvalue=0)
+        #chceckbox for adding date of files not today!
         self.clean_up_button = tk.Button(self.right_side, text="clean", command=self.clean_up)
 
         self.left_side = tk.Frame(self.container)
@@ -69,7 +73,9 @@ class View:
         self.btnCreateDir.pack()
 
         self.clean_up_label.pack()
+        self.recursive_clean_up_checkbox.pack()
         self.clean_up_button.pack()
+
 
         self.right_side.pack(side='right')
 
@@ -106,7 +112,7 @@ class View:
         print(Path(self.getSelectedPath()))
         print(type(Path(self.getSelectedPath())))
 
-        pub.sendMessage("CleanUp_Button_Pressed", arg1=Path(self.getSelectedPath()),arg2 = (Path(self.getSelectedPath()) / 'Cleaned'))
+        pub.sendMessage("CleanUp_Button_Pressed", arg1=Path(self.getSelectedPath()),arg2 = (Path(self.getSelectedPath()) / 'Cleaned'), deep =self.recursive_clean_up_var)
 
 
 if __name__ == "__main__":
