@@ -1,7 +1,9 @@
 import os
+import pathlib
 import tkinter as tk
 from tkinter import messagebox, ttk
 from tkinter import *
+from tkinter import filedialog
 from pathlib import Path
 from pubsub import pub
 
@@ -9,6 +11,8 @@ from pubsub import pub
 class View:
     def __init__(self, parent):
         self.container = parent
+        self.menubar = tk.Menu(self.container)
+        self.container.config(menu=self.menubar)
 
     def setup(self):
 
@@ -16,6 +20,10 @@ class View:
         self.setup_layout()
 
     def create_widgets(self):
+
+        self.filemenu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='File', menu=self.filemenu)
+        self.filemenu.add_command(label="Open", command=self.set_path)
 
         self.main_side = tk.Frame(self.container)
         self.right_side = tk.Frame(self.container)
@@ -47,9 +55,10 @@ class View:
         self.xbar = tk.Scrollbar(self.left_side, orient=tk.HORIZONTAL, command=self.tv.xview)
         self.tv.configure(yscrollcommand=self.ybar.set, xscrollcommand=self.xbar.set)
 
-        self.directory = r'D:\MAIN\CODING\Sem 4'
+        # self.directory = r'D:\MAIN\CODING\Sem 4'
+        self.directory = str(Path.home() / 'Desktop')
         self.tv.heading('#0', text='Dir：' + self.directory, anchor='w')
-        self.tv.column('#0', minwidth=600, width=200, stretch=True, anchor=CENTER)
+        self.tv.column('#0', minwidth=600, width=400, stretch=True, anchor=CENTER)
         self.path = os.path.abspath(self.directory)
         self.node = self.tv.insert('', 'end', text=self.path, open=True)
         self.traverse_dir(self.node, self.path)
@@ -60,13 +69,23 @@ class View:
             # print(d, os.path.getsize(full_path))
             isdir = os.path.isdir(full_path)
             if not isdir:
-                id = self.tv.insert(parent, 'end', text=f'{d} [{os.path.getsize(full_path)}]', open=True)
+                id = self.tv.insert(parent, 'end', text=f'{d} [{os.path.getsize(full_path)}]', open=False)
             if isdir:
-                id = self.tv.insert(parent, 'end', text=f'{d}', open=True)
+                id = self.tv.insert(parent, 'end', text=f'{d}', open=False)
                 self.traverse_dir(id, full_path)
 
-    def update_dir(self, parent, path):
-        pass
+    def update_dir(self):
+        for item in self.tv.get_children():
+            self.tv.delete(item)
+        self.tv.heading('#0', text='Dir：' + self.directory, anchor='w')
+        # self.tv.column('#0', minwidth=600, width=200, stretch=True, anchor=CENTER)
+        self.path = os.path.abspath(self.directory)
+        self.node = self.tv.insert('', 'end', text=self.path, open=True)
+        self.traverse_dir(self.node, self.path)
+
+    def set_path(self):
+        self.directory = tk.filedialog.askdirectory()
+        self.update_dir()
 
     def setup_layout(self):
 
@@ -136,6 +155,7 @@ if __name__ == "__main__":
     HEIGHT = 400
     root.geometry("%sx%s" % (WIDTH, HEIGHT))
     root.title("Deskonizer")
+
 
     view = View(root)
     view.setup()
