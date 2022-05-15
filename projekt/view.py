@@ -30,20 +30,34 @@ class View:
 
         self.button = tk.Button(self.right_side, text="SHOW PATH", command=self.showPath)
 
+        self.dir_path_to_organize = Text(self.right_side, height=1, width=40)
+        self.dir_path_to_organize_btn = Button(self.right_side, text='set dir to clean', command=self.set_cleanup_dir)
+
+        self.dir_path_organized = Text(self.right_side, height=1, width=40)
+        self.dir_path_organized_btn = Button(self.right_side, text='set organized dir path', command=self.set_target_organized_path)
+
+        self.organized_dir_name = Text(self.right_side, height=1, width=40)
+
+
         self.newDirecoryLabel = tk.Label(self.right_side, text="new directory", height=1)
         self.newNameTextBox = tk.Text(self.right_side, height=1, width=20)
 
         self.btnCreateDir = tk.Button(self.right_side, text="create new directory", command=self.createNewDir)
 
         self.clean_up_label = tk.Label(self.right_side, text="cleanup", height=1)
-        #checkbox for recursive cleaning folders,
+        # checkbox for recursive cleaning folders,
         self.recursive_clean_up_var = tk.IntVar()
 
-        self.recursive_clean_up_checkbox = tk.Checkbutton(self.right_side, text='deep clean up', variable=self.recursive_clean_up_var, onvalue=1, offvalue=0)
-        #chceckbox for adding date of files not today!
+        self.recursive_clean_up_checkbox = tk.Checkbutton(self.right_side, text='deep clean up',
+                                                          variable=self.recursive_clean_up_var, onvalue=1, offvalue=0)
+        # chceckbox for adding date of files not today!
         self.dated_clean_up_var = tk.IntVar()
         self.dated_clean_up_checkbox = tk.Checkbutton(self.right_side, text='dated clean up',
-                                                          variable=self.dated_clean_up_var, onvalue=1, offvalue=0)
+                                                      variable=self.dated_clean_up_var, onvalue=1, offvalue=0)
+
+        self.shortcut_var = tk.IntVar()
+        self.shortcut_checkbox = tk.Checkbutton(self.right_side, text='create shortcut',
+                                                      variable=self.shortcut_var, onvalue=1, offvalue=0)
 
         self.clean_up_button = tk.Button(self.right_side, text="clean", command=self.clean_up)
 
@@ -63,7 +77,7 @@ class View:
         self.node = self.tv.insert('', 'end', text=self.path, open=True)
         self.traverse_dir(self.node, self.path)
 
-    def traverse_dir(self, parent, path): #this should update, if exists dont go deeper.
+    def traverse_dir(self, parent, path):  # this should update, if exists dont go deeper.
         for d in os.listdir(path):
             full_path = os.path.join(path, d)
             # print(d, os.path.getsize(full_path))
@@ -87,6 +101,15 @@ class View:
         self.directory = tk.filedialog.askdirectory()
         self.update_dir()
 
+    def set_cleanup_dir(self): #TODO usuwanie jezeli cos jest aktualnie, i to powino byc zablokowane
+        self.dir_path_to_organize.insert(END, chars=self.getSelectedPath())
+
+    def set_target_organized_path(self):
+        self.dir_path_organized.insert(END, chars=self.getSelectedPath()) #TODO usuwanie jezeli cos jest aktualnie a to nie zablokowane
+
+    def set_target_organized_dir_name(self):
+        self.organized_dir_name.get("1.0", 'end-1c')
+
     def setup_layout(self):
 
         self.ybar.pack(side='right', fill=tk.Y)
@@ -101,8 +124,20 @@ class View:
         self.btnCreateDir.pack(fill=BOTH)
 
         self.clean_up_label.pack(fill=BOTH)
+
+        self.dir_path_to_organize.pack(fill=BOTH)
+        self.dir_path_to_organize_btn.pack(fill=BOTH)
+
+        self.dir_path_organized.pack()
+        self.dir_path_organized_btn.pack(fill=BOTH)
+
+        self.organized_dir_name.pack()
+        self.organized_dir_name.pack(fill=BOTH)
+
+
         self.recursive_clean_up_checkbox.pack(fill=BOTH)
         self.dated_clean_up_checkbox.pack(fill=BOTH)
+        self.shortcut_checkbox.pack(fill=BOTH)
         self.clean_up_button.pack(fill=BOTH)
 
 
@@ -134,28 +169,25 @@ class View:
         return path
 
     def createNewDir(self):
-        newDirPath = os.path.join(self.getSelectedPath(), self.newNameTextBox.get("1.0",'end-1c'))
+        newDirPath = os.path.join(self.getSelectedPath(), self.newNameTextBox.get("1.0", 'end-1c'))
         pub.sendMessage("CreateNewDir_Button_Pressed", arg=newDirPath)
 
     def clean_up(self):
-        print(Path(self.getSelectedPath()))
-        print(type(Path(self.getSelectedPath())))
-
         pub.sendMessage("CleanUp_Button_Pressed",
-                        arg1=Path(self.getSelectedPath()),
-                        arg2 = (Path(self.getSelectedPath()) / 'Cleaned'),
-                        deep =self.recursive_clean_up_var,
-                        dated = self.dated_clean_up_var)
+                        arg1=Path(self.dir_path_to_organize.get("1.0", 'end-1c')),
+                        arg2=(Path(self.dir_path_organized.get("1.0", 'end-1c')) / self.organized_dir_name.get("1.0", 'end-1c')),
+                        deep=self.recursive_clean_up_var,
+                        dated=self.dated_clean_up_var,
+                        shortcut=self.shortcut_var)
+        self.update_dir()
 
 
 if __name__ == "__main__":
-
     root = Tk()
     WIDTH = 600
     HEIGHT = 400
     root.geometry("%sx%s" % (WIDTH, HEIGHT))
     root.title("Deskonizer")
-
 
     view = View(root)
     view.setup()

@@ -25,9 +25,9 @@ class Controller:
         print("controller  - showpath btn pressed")
         self.model.showPath()
 
-    def cleanup_btn_pressed(self, arg1, arg2, deep, dated):
+    def cleanup_btn_pressed(self, arg1, arg2, deep, dated, shortcut):
         print("controller  - cleanup btn pressed")
-        self.model.cleanup(arg1, arg2, deep, dated)
+        self.model.cleanup(arg1, arg2, deep, dated, shortcut)
 
 
 if __name__ == "__main__":

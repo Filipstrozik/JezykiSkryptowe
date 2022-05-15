@@ -1,9 +1,10 @@
-import os
+import os, sys
 import shutil
 from pathlib import Path
 from extensions import extensions_paths
 from datetime import date
 import time
+import winshell
 
 
 class Model:
@@ -18,7 +19,7 @@ class Model:
         os.mkdir(path)
 
     def add_date_to_path(self, path: Path, child: Path):
-        #data wedlug dat to robic
+        # data wedlug dat to robic
         child_date = time.ctime(os.path.getctime(child))
         child_year = child_date[-4:]
         child_month = child_date[4:7]
@@ -26,8 +27,7 @@ class Model:
         dated_path.mkdir(parents=True, exist_ok=True)
         return dated_path
 
-    #TODO chyba deep dziala ale inny sposob nazywania datami
-    def cleanup(self, watch_path: Path, destination_root: Path, deep, dated):
+    def cleanup(self, watch_path: Path, destination_root: Path, deep, dated, shortcut):
 
         for child in watch_path.iterdir():
             print(child, destination_root, deep.get(), child.name)
@@ -38,5 +38,21 @@ class Model:
                 else:
                     destination_path.mkdir(parents=True, exist_ok=True)
                 shutil.move(src=child, dst=destination_path)
-            if child.is_dir() and deep.get() == 1 and child.name != 'Cleaned': #to jest folder co robimy z folderem
-                self.cleanup(child, destination_root, deep)
+            if child.is_dir() and deep.get() == 1 and child.name != 'Cleaned':  # to jest folder co robimy z folderem
+                self.cleanup(child, destination_root, deep, shortcut)
+        if shortcut == 1:
+            self.create_shortcut(watch_path, str(destination_root))
+
+
+    #TODO to sie gubi poniewaz nie tworzymy skrótu do pliku tylko do folderu najlepiej.
+    def create_shortcut(self, path, target=''):
+        link_filepath = os.path.join(path, 'shortcut.Ink')
+        winshell.CreateShortcut(Path=link_filepath,
+                                Target=target,
+                                Icon=(target, 0),
+                                Description='Shortcut to a file')
+
+
+if __name__ == "__main__":
+    model = Model()
+    model.create_shortcut('D:\MAIN\CODING\Sem 4\smieci','D:\POBRANE\org2')
