@@ -5,6 +5,7 @@ from extensions import extensions_paths
 from datetime import date
 import time
 import winshell
+from win32com.client import Dispatch
 
 
 class Model:
@@ -41,18 +42,24 @@ class Model:
             if child.is_dir() and deep.get() == 1 and child.name != 'Cleaned':  # to jest folder co robimy z folderem
                 self.cleanup(child, destination_root, deep, shortcut)
         if shortcut == 1:
-            self.create_shortcut(watch_path, str(destination_root))
+            print('creating schortcut')
+            short = destination_root.stem
+            self.create_shortcut(watch_path, str(destination_root), name=short)
 
 
     #TODO to sie gubi poniewaz nie tworzymy skrótu do pliku tylko do folderu najlepiej.
-    def create_shortcut(self, path, target=''):
-        link_filepath = os.path.join(path, 'shortcut.Ink')
-        winshell.CreateShortcut(Path=link_filepath,
-                                Target=target,
-                                Icon=(target, 0),
-                                Description='Shortcut to a file')
+    def create_shortcut(self, path, target='', name='shortcut'):
+        link_filepath = os.path.join(path, name)
+        shell = Dispatch('WScript.Shell')
+        shortcut = shell.CreateShortCut(link_filepath)
+        shortcut.Targetpath = target
+        shortcut.save()
 
+    def edit_ext_dir_name(self, extension, dir_name):
+        extensions_paths[extension] = dir_name
+
+    def delete_ext(self, extension):
+        extensions_paths.pop(extension)
 
 if __name__ == "__main__":
     model = Model()
-    model.create_shortcut('D:\MAIN\CODING\Sem 4\smieci','D:\POBRANE\org2')
