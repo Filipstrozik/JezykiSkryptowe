@@ -4,6 +4,7 @@ from pubsub import pub
 
 from model import Model
 from view import View
+from watchdog.observers import Observer
 
 
 class Controller:
@@ -11,6 +12,10 @@ class Controller:
         self.parent = parent
         self.model = Model()
         self.view = View(parent)
+
+        observer = Observer()
+        observer.schedule(self.view, f'{self.view.directory}', recursive=True)
+        observer.start()
         self.view.setup()
 
         pub.subscribe(self.showpath_btn_pressed, "ShowPath_Button_Pressed")
@@ -45,4 +50,5 @@ if __name__ == "__main__":
     root.title("DeskCleanUp")
 
     app = Controller(root)
+
     root.mainloop()
