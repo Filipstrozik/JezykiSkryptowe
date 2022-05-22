@@ -1,19 +1,17 @@
 import json
 import os
 import subprocess
+import threading
 import tkinter as tk
 import tkinter.messagebox
 from pathlib import Path
 from tkinter import *
 from tkinter import filedialog
 from tkinter import ttk
-import matplotlib.pyplot as plt
+
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-import numpy as np
 from pubsub import pub
-from extensions import extensions_paths
-import threading
 from watchdog.events import FileSystemEventHandler
 
 
@@ -26,6 +24,7 @@ class View(FileSystemEventHandler):
         self.directory = str(Path.home() / 'Desktop')
         self.sizes = []
         self.dirs = []
+        self.f = Figure(figsize=(5, 5), dpi=80)
 
     def setup(self):
         self.create_widgets()
@@ -45,12 +44,17 @@ class View(FileSystemEventHandler):
 
         self.button = tk.Button(self.right_side, text="SHOW PATH", command=self.showPath)
 
+        # dir_path_to_organize
         self.dir_path_to_organize = Text(self.right_side, height=1, width=30)
         self.dir_path_to_organize_btn = Button(self.right_side, text='set dir to clean', command=self.set_cleanup_dir)
-
+        self.dir_path_to_organize_popup_btn = Button(self.right_side, text='choose dir from explorer',
+                                                     command=self.set_cleanup_dir_popup)
+        #dir_path_organized
         self.dir_path_organized = Text(self.right_side, height=1, width=30)
         self.dir_path_organized_btn = Button(self.right_side, text='set organized dir path',
                                              command=self.set_target_organized_path)
+        self.dir_path_organized_popup_btn = Button(self.right_side, text='choose dir from explorer',
+                                                     command=self.set_target_organized_path_popup)
 
         self.organized_dir_name_label = tk.Label(self.right_side, text="write your custom name of organized dir",
                                                  height=1)
@@ -77,7 +81,7 @@ class View(FileSystemEventHandler):
                                                 variable=self.shortcut_var, onvalue=1, offvalue=0)
 
         self.clean_up_button = tk.Button(self.right_side, text="clean", command=self.clean_up)
-        self.clean_up_button['state'] = 'disabled'
+        # self.clean_up_button['state'] = 'disabled'
 
         self.left_side = tk.Frame(self.container)
 
@@ -86,8 +90,6 @@ class View(FileSystemEventHandler):
                                  command=self.tv.yview)
         self.xbar = tk.Scrollbar(self.left_side, orient=tk.HORIZONTAL, command=self.tv.xview)
         self.tv.configure(yscrollcommand=self.ybar.set, xscrollcommand=self.xbar.set)
-
-        # self.directory = r'D:\MAIN\CODING\Sem 4'
 
         self.tv.heading('#0', text='Dir：' + self.directory, anchor='w')
         self.tv.column('#0', minwidth=600, width=400, stretch=True, anchor=CENTER)
@@ -107,9 +109,11 @@ class View(FileSystemEventHandler):
 
         self.dir_path_to_organize.pack(fill=BOTH)
         self.dir_path_to_organize_btn.pack(fill=BOTH)
+        self.dir_path_to_organize_popup_btn.pack(fill=BOTH)
 
         self.dir_path_organized.pack()
         self.dir_path_organized_btn.pack(fill=BOTH)
+        self.dir_path_organized_popup_btn.pack()
 
         self.organized_dir_name_label.pack()
         self.organized_dir_name.pack(fill=BOTH)
@@ -121,24 +125,27 @@ class View(FileSystemEventHandler):
 
         self.right_side.pack(side='right', fill=BOTH)
 
-
-    def traverse_dir(self, parent, path, flag) -> int:  # this should update, if exists dont go deeper.
+    def traverse_dir(self, parent, path, flag) -> float:  # this should update, if exists dont go deeper.
         acc = 0
         for d in os.listdir(path):
             full_path = os.path.join(path, d)
-            # print(d, os.path.getsize(full_path))
+            # print(full_path)
             isdir = os.path.isdir(full_path)
             if not isdir:
-                acc += os.path.getsize(full_path)
+                file_size = os.path.getsize(full_path)
+                acc += file_size
+                if flag == 1:
+                    self.sizes.append(file_size)
+                    self.dirs.append(d)
                 self.tv.insert(parent, 'end', text=f'{d} [{os.path.getsize(full_path)}]', open=False)
             if isdir:
                 if flag == 1:
                     p = subprocess.check_output(['powershell.exe',
-                                             f'((Get-ChildItem {full_path} -Recurse | Measure-Object -Property Length -Sum -ErrorAction Stop).Sum / 1MB)'])
+                                                 f'((Get-ChildItem "{full_path}" -Recurse | Measure-Object -Property Length -Sum -ErrorAction Stop).Sum / 1MB)'])
 
                     pString = str(p)
                     pString = pString[2:len(pString) - 5]
-                    pString = pString.replace(",",".")
+                    pString = pString.replace(",", ".")
                     fsize = float(pString)
                     self.sizes.append(fsize)
                     self.dirs.append(d)
@@ -151,14 +158,15 @@ class View(FileSystemEventHandler):
     def update_dir(self):
         for item in self.tv.get_children():
             self.tv.delete(item)
+        self.dirs.clear()
+        self.sizes.clear()
         self.tv.heading('#0', text='Dir：' + self.directory, anchor='w')
         # self.tv.column('#0', minwidth=600, width=200, stretch=True, anchor=CENTER)
         self.path = os.path.abspath(self.directory)
         self.node = self.tv.insert('', 'end', text=self.path, open=True)
         self.traverse_dir(self.node, self.path, 1)
+        self.clear_graph()
         self.graph()
-
-
 
     def set_path(self):
 
@@ -170,12 +178,22 @@ class View(FileSystemEventHandler):
 
         self.top_progress.destroy()
 
-    def set_cleanup_dir(self):  # TODO usuwanie jezeli cos jest aktualnie, i to powino byc zablokowane
+    # dir_path_to_organize
+    def set_cleanup_dir_popup(self):
+        self.dir_path_to_organize.delete("1.0", 'end-1c')
+        self.dir_path_to_organize.insert(END, chars=tk.filedialog.askdirectory())
+
+    def set_cleanup_dir(self):
+        self.dir_path_to_organize.delete("1.0", 'end-1c')
         self.dir_path_to_organize.insert(END, chars=self.getSelectedPath())
 
     def set_target_organized_path(self):
-        self.dir_path_organized.insert(END,
-                                       chars=self.getSelectedPath())  # TODO usuwanie jezeli cos jest aktualnie a to nie zablokowane
+        self.dir_path_organized.delete("1.0", 'end-1c')
+        self.dir_path_organized.insert(END, chars=self.getSelectedPath())
+
+    def set_target_organized_path_popup(self):
+        self.dir_path_organized.delete("1.0", 'end-1c')
+        self.dir_path_organized.insert(END, chars=tk.filedialog.askdirectory())
 
     def set_target_organized_dir_name(self):
         self.organized_dir_name.get("1.0", 'end-1c')
@@ -194,16 +212,20 @@ class View(FileSystemEventHandler):
         return path
 
     def getSelectedPath(self):
-        item_iid = self.tv.selection()[0]
-        parent_iid = self.tv.parent(item_iid)
-        node = []
+        try:
+            item_iid = self.tv.selection()[0]
+            parent_iid = self.tv.parent(item_iid)
+            node = []
 
-        while parent_iid != '':
-            node.insert(0, self.tv.item(parent_iid)['text'])
-            parent_iid = self.tv.parent(parent_iid)
-        i = self.tv.item(item_iid, "text")
-        path = os.path.join(*node, i)
-        return path
+            while parent_iid != '':
+                node.insert(0, self.tv.item(parent_iid)['text'])
+                parent_iid = self.tv.parent(parent_iid)
+            i = self.tv.item(item_iid, "text")
+            path = os.path.join(*node, i)
+            return path
+        except IndexError:
+            self.popup_error('Error!', 'No extension is selected! - select one.')
+            return ''
 
     def createNewDir(self):
         newDirPath = os.path.join(self.getSelectedPath(), self.newNameTextBox.get("1.0", 'end-1c'))
@@ -328,21 +350,28 @@ class View(FileSystemEventHandler):
         for row in self.extensions_paths:
             self.ext.insert('', tk.END, values=(row, self.extensions_paths[row]))
 
-    def graph(self):
+    def graph(self): #TODO fix this graph pls
 
-        # stockListExp = ['AMZN', 'AAPL', 'JETS', 'CCL', 'NCLH']
-        # stockSplitExp = [15, 25, 40, 10, 10]
+        print(self.sizes)
+        print(self.dirs)
 
-        f = Figure()
-        f = Figure(figsize=(5, 5), dpi=80)
-        a = f.add_subplot(111)
 
-        a.pie(self.sizes, radius=1, labels=self.dirs, shadow=True, autopct='%0.2f%%')
-        a.legend(loc="best")
+        self.f.canvas.draw()
+        self.f.canvas.flush_events()
+
+        self.a = self.f.add_subplot(111)
+
+        # self.a.clear()
+        self.a.pie(self.sizes, radius=1, labels=self.dirs, shadow=True, autopct='%0.2f%%')
+        # self.a.legend(loc="best")
+
         # a.plot([1, 2, 3, 4, 5, 6, 7, 8], [5,7,4,4,7,9,7,9])
+        self.canvas = FigureCanvasTkAgg(self.f, self.container)
+        self.canvas.get_tk_widget().pack()
+        # self.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=True)
 
-        canvas = FigureCanvasTkAgg(f)
-        canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=True)
+    def clear_graph(self):
+        self.f.clf()
 
     def open_progress_bar(self):
         self.top_progress = Toplevel(self.container)
