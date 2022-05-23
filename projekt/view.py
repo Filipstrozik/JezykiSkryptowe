@@ -1,3 +1,4 @@
+import concurrent.futures
 import json
 import os
 import subprocess
@@ -17,6 +18,7 @@ from watchdog.events import FileSystemEventHandler
 
 class View(FileSystemEventHandler):
     def __init__(self, parent):
+
         self.container = parent
         self.menubar = tk.Menu(self.container)
         self.container.config(menu=self.menubar)
@@ -25,6 +27,15 @@ class View(FileSystemEventHandler):
         self.sizes = []
         self.dirs = []
         self.f = Figure(figsize=(5, 5), dpi=80)
+        self.canvas = FigureCanvasTkAgg(self.f, self.container)
+
+        # self.top_progress = Toplevel(self.container)
+        # self.top_progress.resizable(False, False)
+        # self.top_progress.geometry("300x20")
+        # self.pb = ttk.Progressbar(self.top_progress,
+        #                           orient='horizontal',
+        #                           mode='determinate',
+        #                           length=300)
 
     def setup(self):
         self.create_widgets()
@@ -49,12 +60,12 @@ class View(FileSystemEventHandler):
         self.dir_path_to_organize_btn = Button(self.right_side, text='set dir to clean', command=self.set_cleanup_dir)
         self.dir_path_to_organize_popup_btn = Button(self.right_side, text='choose dir from explorer',
                                                      command=self.set_cleanup_dir_popup)
-        #dir_path_organized
+        # dir_path_organized
         self.dir_path_organized = Text(self.right_side, height=1, width=30)
         self.dir_path_organized_btn = Button(self.right_side, text='set organized dir path',
                                              command=self.set_target_organized_path)
         self.dir_path_organized_popup_btn = Button(self.right_side, text='choose dir from explorer',
-                                                     command=self.set_target_organized_path_popup)
+                                                   command=self.set_target_organized_path_popup)
 
         self.organized_dir_name_label = tk.Label(self.right_side, text="write your custom name of organized dir",
                                                  height=1)
@@ -95,7 +106,10 @@ class View(FileSystemEventHandler):
         self.tv.column('#0', minwidth=600, width=400, stretch=True, anchor=CENTER)
         self.path = os.path.abspath(self.directory)
         self.node = self.tv.insert('', 'end', text=self.path, open=True)
+        self.open_progress_bar()
         self.traverse_dir(self.node, self.path, 1)
+        self.graph()
+        self.top_progress.destroy()
 
     def setup_layout(self):
 
@@ -123,21 +137,29 @@ class View(FileSystemEventHandler):
         self.shortcut_checkbox.pack(fill=BOTH)
         self.clean_up_button.pack(fill=BOTH)
 
-        self.right_side.pack(side='right', fill=BOTH)
+        self.right_side.pack(side=BOTTOM, fill=BOTH)
 
     def traverse_dir(self, parent, path, flag) -> float:  # this should update, if exists dont go deeper.
+        print('updating...')
+
         acc = 0
+        if flag == 1:
+            no_dirs = len(os.listdir(path))
+            x = 100.0 / no_dirs
         for d in os.listdir(path):
             full_path = os.path.join(path, d)
             # print(full_path)
             isdir = os.path.isdir(full_path)
             if not isdir:
-                file_size = os.path.getsize(full_path)
+                file_size = float(os.path.getsize(full_path)) / (1024.0**2)
                 acc += file_size
                 if flag == 1:
                     self.sizes.append(file_size)
                     self.dirs.append(d)
-                self.tv.insert(parent, 'end', text=f'{d} [{os.path.getsize(full_path)}]', open=False)
+                    self.container.update_idletasks()
+                    self.pb['value'] += x
+                self.tv.insert(parent, 'end', text=f'{d} [{file_size}]', open=False)
+
             if isdir:
                 if flag == 1:
                     p = subprocess.check_output(['powershell.exe',
@@ -150,9 +172,13 @@ class View(FileSystemEventHandler):
                     self.sizes.append(fsize)
                     self.dirs.append(d)
                     id = self.tv.insert(parent, 'end', text=f'{d} [{fsize}]', open=False)
+                    self.container.update_idletasks()
+                    self.pb['value'] += x
                 else:
                     id = self.tv.insert(parent, 'end', text=f'{d}', open=False)
                 self.traverse_dir(id, full_path, 0)
+                # TODO tutaj udpdate progess baru tlylko jak flag == 1
+
         return acc
 
     def update_dir(self):
@@ -167,16 +193,20 @@ class View(FileSystemEventHandler):
         self.traverse_dir(self.node, self.path, 1)
         self.clear_graph()
         self.graph()
+        print('done')
+        self.top_progress.destroy()
+        return True
 
     def set_path(self):
 
+        self.directory = tk.filedialog.askdirectory()
         self.open_progress_bar()
 
-        self.directory = tk.filedialog.askdirectory()
+        # t1 = threading.Thread(target=self.open_progress_bar)
+        t2 = threading.Thread(target=self.update_dir)  # TODO to wcale nie dziala tak jak bysmy chcieli
+        # t1.start()
 
-        threading.Thread(target=self.update_dir()).start()  # TODO to wcale nie dziala tak jak bysmy chcieli
-
-        self.top_progress.destroy()
+        t2.start()
 
     # dir_path_to_organize
     def set_cleanup_dir_popup(self):
@@ -350,27 +380,32 @@ class View(FileSystemEventHandler):
         for row in self.extensions_paths:
             self.ext.insert('', tk.END, values=(row, self.extensions_paths[row]))
 
-    def graph(self): #TODO fix this graph pls
+    def graph(self):  # TODO fix this graph pls
 
         print(self.sizes)
         print(self.dirs)
-
-
+        sum = 0.0
+        for size in self.sizes:
+            sum += size
+        self.canvas.get_tk_widget().destroy()
         self.f.canvas.draw()
         self.f.canvas.flush_events()
 
         self.a = self.f.add_subplot(111)
 
         # self.a.clear()
-        self.a.pie(self.sizes, radius=1, labels=self.dirs, shadow=True, autopct='%0.2f%%')
+        self.a.pie(self.sizes, radius=1, labels=self.dirs, shadow=True, autopct= lambda x: '{:.2f} MB'.format(x*sum/100))
+        # self.a.pie(self.sizes, radius=1, labels=self.dirs, shadow=True, autopct='%0.2f%%')
         # self.a.legend(loc="best")
 
         # a.plot([1, 2, 3, 4, 5, 6, 7, 8], [5,7,4,4,7,9,7,9])
         self.canvas = FigureCanvasTkAgg(self.f, self.container)
-        self.canvas.get_tk_widget().pack()
+        self.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=True)
         # self.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=True)
 
     def clear_graph(self):
+        self.f.canvas.draw()
+        self.f.canvas.flush_events()
         self.f.clf()
 
     def open_progress_bar(self):
@@ -379,9 +414,9 @@ class View(FileSystemEventHandler):
         self.top_progress.geometry("300x20")
         self.pb = ttk.Progressbar(self.top_progress,
                                   orient='horizontal',
-                                  mode='indeterminate',
+                                  mode='determinate',
                                   length=280)
-        self.pb.start(10)
+        # self.pb.start(20)
         self.pb.pack()
 
     def popup_error(self, frame_text, info_text):
