@@ -1,4 +1,3 @@
-import concurrent.futures
 import json
 import os
 import subprocess
@@ -19,6 +18,10 @@ from watchdog.events import FileSystemEventHandler
 class View(FileSystemEventHandler):
     def __init__(self, parent):
 
+        self.left_side = None
+        self.right_top_side = None
+        self.right_bottom_side = None
+        self.main_side = None
         self.container = parent
         self.menubar = tk.Menu(self.container)
         self.container.config(menu=self.menubar)
@@ -27,22 +30,13 @@ class View(FileSystemEventHandler):
         self.sizes = []
         self.dirs = []
         self.f = Figure(figsize=(5, 5), dpi=80)
-        self.canvas = FigureCanvasTkAgg(self.f, self.container)
-
-        # self.top_progress = Toplevel(self.container)
-        # self.top_progress.resizable(False, False)
-        # self.top_progress.geometry("300x20")
-        # self.pb = ttk.Progressbar(self.top_progress,
-        #                           orient='horizontal',
-        #                           mode='determinate',
-        #                           length=300)
+        self.canvas = FigureCanvasTkAgg(self.f, self.right_top_side)
 
     def setup(self):
         self.create_widgets()
         self.setup_layout()
 
     def create_widgets(self):
-
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
         self.setmenu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='File', menu=self.filemenu)
@@ -50,51 +44,61 @@ class View(FileSystemEventHandler):
         self.setmenu.add_command(label="change extension directory names", command=self.open_popup)
         self.filemenu.add_command(label="Open", command=self.set_path)
 
-        self.main_side = tk.Frame(self.container)
-        self.right_side = tk.Frame(self.container)
+        # main_side_frame
+        self.main_side = tk.Frame(self.container, highlightbackground='green', highlightthickness=10)
 
-        self.button = tk.Button(self.right_side, text="SHOW PATH", command=self.showPath)
+        # right_side_Frame
+        self.right_side = tk.Frame(self.main_side, highlightbackground='black', highlightthickness=10)
+        # right_side_bottom_frame
+        self.right_bottom_side = tk.Frame(self.right_side, highlightbackground='blue', highlightthickness=10)
+
+        # right_side_top_frame
+        self.right_top_side = tk.Frame(self.right_side, highlightbackground='green', highlightthickness=10)
+
+        # left_side_frame
+        self.left_side = tk.Frame(self.main_side, highlightbackground='red', highlightthickness=20)
+
+        self.button = tk.Button(self.right_bottom_side, text="SHOW PATH", command=self.showPath)
 
         # dir_path_to_organize
-        self.dir_path_to_organize = Text(self.right_side, height=1, width=30)
-        self.dir_path_to_organize_btn = Button(self.right_side, text='set dir to clean', command=self.set_cleanup_dir)
-        self.dir_path_to_organize_popup_btn = Button(self.right_side, text='choose dir from explorer',
+        self.dir_path_to_organize = Text(self.right_bottom_side, height=1, width=30)
+        self.dir_path_to_organize_btn = Button(self.right_bottom_side, text='SELECT DIRECTORY',
+                                               command=self.set_cleanup_dir)
+        self.dir_path_to_organize_popup_btn = Button(self.right_bottom_side, text='OPEN DIRECTORY',
                                                      command=self.set_cleanup_dir_popup)
         # dir_path_organized
-        self.dir_path_organized = Text(self.right_side, height=1, width=30)
-        self.dir_path_organized_btn = Button(self.right_side, text='set organized dir path',
+        self.dir_path_organized = Text(self.right_bottom_side, height=1, width=30)
+        self.dir_path_organized_btn = Button(self.right_bottom_side, text='SELECT OUPUT PATH',
                                              command=self.set_target_organized_path)
-        self.dir_path_organized_popup_btn = Button(self.right_side, text='choose dir from explorer',
+        self.dir_path_organized_popup_btn = Button(self.right_bottom_side, text='OPEN DIRECTORY OUPUT',
                                                    command=self.set_target_organized_path_popup)
 
-        self.organized_dir_name_label = tk.Label(self.right_side, text="write your custom name of organized dir",
+        # organized_dir_name
+        self.organized_dir_name_label = tk.Label(self.right_bottom_side, text="CUSTOM NAME",
                                                  height=1)
-        self.organized_dir_name = Text(self.right_side, height=1, width=30)
+        self.organized_dir_name = Text(self.right_bottom_side, height=1, width=30)
 
-        self.newDirecoryLabel = tk.Label(self.right_side, text="new directory", height=1)
-        self.newNameTextBox = tk.Text(self.right_side, height=1, width=20)
+        self.newDirecoryLabel = tk.Label(self.right_bottom_side, text="new directory", height=1)
+        self.newNameTextBox = tk.Text(self.right_bottom_side, height=1, width=20)
 
-        self.btnCreateDir = tk.Button(self.right_side, text="create new directory", command=self.createNewDir)
+        self.btnCreateDir = tk.Button(self.right_bottom_side, text="create new directory", command=self.createNewDir)
 
-        self.clean_up_label = tk.Label(self.right_side, text="cleanup", height=1)
+        self.clean_up_label = tk.Label(self.right_bottom_side, text="cleanup", height=1)
         # checkbox for recursive cleaning folders,
         self.recursive_clean_up_var = tk.IntVar()
-
-        self.recursive_clean_up_checkbox = tk.Checkbutton(self.right_side, text='deep clean up',
+        self.recursive_clean_up_checkbox = tk.Checkbutton(self.right_bottom_side, text='deep',
                                                           variable=self.recursive_clean_up_var, onvalue=1, offvalue=0)
         # chceckbox for adding date of files not today!
         self.dated_clean_up_var = tk.IntVar()
-        self.dated_clean_up_checkbox = tk.Checkbutton(self.right_side, text='dated clean up',
+        self.dated_clean_up_checkbox = tk.Checkbutton(self.right_bottom_side, text='dated',
                                                       variable=self.dated_clean_up_var, onvalue=1, offvalue=0)
 
         self.shortcut_var = tk.IntVar()
-        self.shortcut_checkbox = tk.Checkbutton(self.right_side, text='create shortcut',
+        self.shortcut_checkbox = tk.Checkbutton(self.right_bottom_side, text='shortcut',
                                                 variable=self.shortcut_var, onvalue=1, offvalue=0)
 
-        self.clean_up_button = tk.Button(self.right_side, text="clean", command=self.clean_up)
+        self.clean_up_button = tk.Button(self.right_bottom_side, text="CLEANUP", command=self.clean_up, background='green')
         # self.clean_up_button['state'] = 'disabled'
-
-        self.left_side = tk.Frame(self.container)
 
         self.tv = ttk.Treeview(self.left_side, show='tree')
         self.ybar = tk.Scrollbar(self.left_side, orient=tk.VERTICAL,
@@ -103,11 +107,14 @@ class View(FileSystemEventHandler):
         self.tv.configure(yscrollcommand=self.ybar.set, xscrollcommand=self.xbar.set)
 
         self.tv.heading('#0', text='Dir：' + self.directory, anchor='w')
-        self.tv.column('#0', minwidth=600, width=400, stretch=True, anchor=CENTER)
+        self.tree_view_width = 0
+        self.tv.column('#0', minwidth=600, width=600, stretch=True, anchor=CENTER)
         self.path = os.path.abspath(self.directory)
         self.node = self.tv.insert('', 'end', text=self.path, open=True)
         self.open_progress_bar()
         self.traverse_dir(self.node, self.path, 1)
+        print(self.tree_view_width)
+
         self.graph()
         self.top_progress.destroy()
 
@@ -116,48 +123,74 @@ class View(FileSystemEventHandler):
         self.ybar.pack(side='right', fill=tk.Y)
         self.xbar.pack(side='bottom', fill=tk.X)
         self.tv.pack(side='left', fill=Y)
-        # self.tv.grid(row=0, column=0)
-        self.left_side.pack(side='left', fill=Y)
 
-        self.clean_up_label.pack(fill=BOTH)
+        self.main_side.columnconfigure(0, weight=1)
+        self.main_side.columnconfigure(1, weight=1)
+        self.main_side.rowconfigure(0, weight=1)
 
-        self.dir_path_to_organize.pack(fill=BOTH)
-        self.dir_path_to_organize_btn.pack(fill=BOTH)
-        self.dir_path_to_organize_popup_btn.pack(fill=BOTH)
+        self.right_side.columnconfigure(0, weight=1)
+        self.right_side.rowconfigure(0, weight=1)
+        self.right_side.rowconfigure(1, weight=1)
 
-        self.dir_path_organized.pack()
-        self.dir_path_organized_btn.pack(fill=BOTH)
-        self.dir_path_organized_popup_btn.pack()
+        self.left_side.grid(row=0, column=0, sticky="nsew")
+        self.right_side.grid(row=0, column=1, sticky="nsew")
 
-        self.organized_dir_name_label.pack()
-        self.organized_dir_name.pack(fill=BOTH)
+        self.dir_path_to_organize.grid(row=0, column=0, columnspan=2, sticky="nsew")
+        self.dir_path_to_organize_btn.grid(row=1, column=0, sticky="nsew")
+        self.dir_path_to_organize_popup_btn.grid(row=1, column=1, sticky="nsew")
 
-        self.recursive_clean_up_checkbox.pack(fill=BOTH)
-        self.dated_clean_up_checkbox.pack(fill=BOTH)
-        self.shortcut_checkbox.pack(fill=BOTH)
-        self.clean_up_button.pack(fill=BOTH)
+        self.dir_path_organized.grid(row=3, column=0, columnspan=2, sticky="nsew")
+        self.dir_path_organized_btn.grid(row=4, column=0, sticky="nsew")
+        self.dir_path_organized_popup_btn.grid(row=4, column=1, sticky="nsew")
 
-        self.right_side.pack(side=BOTTOM, fill=BOTH)
+        self.organized_dir_name_label.grid(row=0, column=2, columnspan=2, sticky="nsew")
+        self.organized_dir_name.grid(row=1, column=2, columnspan=2, sticky="nsew")
 
-    def traverse_dir(self, parent, path, flag) -> float:  # this should update, if exists dont go deeper.
-        print('updating...')
+        self.recursive_clean_up_checkbox.grid(row=2, column=2, sticky="nsew")
+        self.dated_clean_up_checkbox.grid(row=2, column=3, sticky="nsew")
+        self.shortcut_checkbox.grid(row=3, column=2, sticky="nsew")
 
+        self.clean_up_button.grid(row=4, column=2, columnspan=2, sticky="nsew")
+
+
+        self.right_top_side.grid(row=0, column=0, sticky="nsew")
+
+        self.right_bottom_side.columnconfigure(0, weight=1)
+        self.right_bottom_side.columnconfigure(1, weight=1)
+        self.right_bottom_side.columnconfigure(2, weight=1)
+        self.right_bottom_side.columnconfigure(3, weight=1)
+        self.right_bottom_side.rowconfigure(0, weight=1)
+        self.right_bottom_side.rowconfigure(1, weight=1)
+        self.right_bottom_side.rowconfigure(2, weight=1)
+        self.right_bottom_side.rowconfigure(3, weight=1)
+        self.right_bottom_side.rowconfigure(4, weight=1)
+        self.right_bottom_side.rowconfigure(5, weight=1)
+
+        self.right_bottom_side.grid(row=1, column=0, sticky="nsew")
+
+        self.main_side.pack(fill=BOTH, expand=True)
+
+    def traverse_dir(self, parent, path, flag) -> float:
         acc = 0
         if flag == 1:
             no_dirs = len(os.listdir(path))
             x = 100.0 / no_dirs
         for d in os.listdir(path):
             full_path = os.path.join(path, d)
-            # print(full_path)
+            # self.tree_view_width = max(100 + len(d), self.tree_view_width)
+            # print(len(d))
             isdir = os.path.isdir(full_path)
             if not isdir:
-                file_size = float(os.path.getsize(full_path)) / (1024.0**2)
+                file_size = float(os.path.getsize(full_path)) / (1024.0 ** 2)
                 acc += file_size
                 if flag == 1:
                     self.sizes.append(file_size)
                     self.dirs.append(d)
                     self.container.update_idletasks()
-                    self.pb['value'] += x
+                    try:
+                        self.pb['value'] += x
+                    except:
+                        pass
                 self.tv.insert(parent, 'end', text=f'{d} [{file_size}]', open=False)
 
             if isdir:
@@ -173,7 +206,10 @@ class View(FileSystemEventHandler):
                     self.dirs.append(d)
                     id = self.tv.insert(parent, 'end', text=f'{d} [{fsize}]', open=False)
                     self.container.update_idletasks()
-                    self.pb['value'] += x
+                    try:
+                        self.pb['value'] += x
+                    except:
+                        pass
                 else:
                     id = self.tv.insert(parent, 'end', text=f'{d}', open=False)
                 self.traverse_dir(id, full_path, 0)
@@ -201,11 +237,7 @@ class View(FileSystemEventHandler):
 
         self.directory = tk.filedialog.askdirectory()
         self.open_progress_bar()
-
-        # t1 = threading.Thread(target=self.open_progress_bar)
         t2 = threading.Thread(target=self.update_dir)  # TODO to wcale nie dziala tak jak bysmy chcieli
-        # t1.start()
-
         t2.start()
 
     # dir_path_to_organize
@@ -380,7 +412,7 @@ class View(FileSystemEventHandler):
         for row in self.extensions_paths:
             self.ext.insert('', tk.END, values=(row, self.extensions_paths[row]))
 
-    def graph(self):  # TODO fix this graph pls
+    def graph(self):
 
         print(self.sizes)
         print(self.dirs)
@@ -394,12 +426,13 @@ class View(FileSystemEventHandler):
         self.a = self.f.add_subplot(111)
 
         # self.a.clear()
-        self.a.pie(self.sizes, radius=1, labels=self.dirs, shadow=True, autopct= lambda x: '{:.2f} MB'.format(x*sum/100))
+        self.a.pie(self.sizes, radius=1, labels=self.dirs, shadow=True,
+                   autopct=lambda x: '{:.2f} MB'.format(x * sum / 100))
         # self.a.pie(self.sizes, radius=1, labels=self.dirs, shadow=True, autopct='%0.2f%%')
         # self.a.legend(loc="best")
 
         # a.plot([1, 2, 3, 4, 5, 6, 7, 8], [5,7,4,4,7,9,7,9])
-        self.canvas = FigureCanvasTkAgg(self.f, self.container)
+        self.canvas = FigureCanvasTkAgg(self.f, self.right_top_side)
         self.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=True)
         # self.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=True)
 
@@ -422,8 +455,28 @@ class View(FileSystemEventHandler):
     def popup_error(self, frame_text, info_text):
         tkinter.messagebox.showerror(frame_text, info_text)
 
-    def on_modified(self, event):
-        self.update_dir()
+    # def on_modified(self, event):
+    #     if self.flag == 1:
+    #         print('on_modified!')
+    #         self.open_progress_bar()
+    #         t2 = threading.Thread(target=self.update_dir)  # TODO to wcale nie dziala tak jak bysmy chcieli
+    #         t2.start()
+    #         t2.join()
+
+
+    def on_created(self, event):
+        print('on_created!')
+        self.open_progress_bar()
+        t2 = threading.Thread(target=self.update_dir)
+        t2.start()
+        t2.join()
+
+    def on_deleted(self, event):
+        print('on_deleted')
+        self.open_progress_bar()
+        t2 = threading.Thread(target=self.update_dir)
+        t2.start()
+        t2.join()
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ class Controller:
         self.view = View(parent)
 
         observer = Observer()
-        observer.schedule(self.view, f'{self.view.directory}', recursive=True)
+        observer.schedule(self.view, f'{self.view.directory}', recursive=False)
         observer.start()
         self.view.setup()
 
@@ -42,11 +42,11 @@ class Controller:
 
 if __name__ == "__main__":
     root = Tk()
-    WIDTH = 800
-    HEIGHT = 400
+    WIDTH = 1000
+    HEIGHT = 800
     root.geometry("%sx%s" % (WIDTH, HEIGHT))
-    root.minsize(400, 300)
-    root.maxsize(1000, 800)
+    root.minsize(800, 400)
+    root.maxsize(1920, 1080)
     root.title("DeskCleanUp")
 
     app = Controller(root)
