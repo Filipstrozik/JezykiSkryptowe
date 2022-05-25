@@ -5,6 +5,7 @@ from pubsub import pub
 from model import Model
 from view import View
 from watchdog.observers import Observer
+import customtkinter as ctk
 
 
 class Controller:
@@ -45,7 +46,7 @@ class Controller:
 
 
 if __name__ == "__main__":
-    root = Tk()
+    root = ctk.CTk()
     WIDTH = 1000
     HEIGHT = 800
     root.geometry("%sx%s" % (WIDTH, HEIGHT))
