@@ -23,6 +23,7 @@ class Controller:
         pub.subscribe(self.cleanup_btn_pressed, "CleanUp_Button_Pressed")
         pub.subscribe(self.edit_dir_name_btn_pressed, "Edit_Dir_Name_Button_Pressed")
         pub.subscribe(self.delete_ext_btn_pressed, "Delete_Ext_Button_Pressed")
+        pub.subscribe(self.undo_btn_pressed, "Undo_Button_Pressed")
 
     def createdir_btn_pressed(self, arg):
         self.model.createNewDir(arg)
@@ -30,14 +31,17 @@ class Controller:
     def showpath_btn_pressed(self):
         self.model.showPath()
 
-    def cleanup_btn_pressed(self, arg1, arg2, deep, dated, shortcut):
-        self.model.cleanup(arg1, arg2, deep, dated, shortcut)
+    def cleanup_btn_pressed(self, arg1, arg2, deep, dated, shortcut, only_view):
+        self.model.cleanup(arg1, arg2, deep, dated, shortcut, only_view)
 
     def edit_dir_name_btn_pressed(self, extension, dir_name):
         self.model.edit_ext_dir_name(extension, dir_name)
 
     def delete_ext_btn_pressed(self, extension):
         self.model.delete_ext(extension)
+
+    def undo_btn_pressed(self):
+        self.model.undo(self.model.destination)
 
 
 if __name__ == "__main__":

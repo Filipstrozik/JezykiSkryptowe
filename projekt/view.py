@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import threading
 import tkinter as tk
@@ -14,6 +15,7 @@ from matplotlib.figure import Figure
 from pubsub import pub
 from watchdog.events import FileSystemEventHandler
 
+#TODO robic same shortcuty - nie przenosic niczego
 
 class View(FileSystemEventHandler):
     def __init__(self, parent):
@@ -61,12 +63,14 @@ class View(FileSystemEventHandler):
         self.button = tk.Button(self.right_bottom_side, text="SHOW PATH", command=self.showPath)
 
         # dir_path_to_organize
+        #TODO refractor to entry to disable next id empty
         self.dir_path_to_organize = Text(self.right_bottom_side, height=1, width=30)
         self.dir_path_to_organize_btn = Button(self.right_bottom_side, text='SELECT DIRECTORY',
                                                command=self.set_cleanup_dir)
         self.dir_path_to_organize_popup_btn = Button(self.right_bottom_side, text='OPEN DIRECTORY',
                                                      command=self.set_cleanup_dir_popup)
         # dir_path_organized
+        # TODO refractor to entry to disable next id empty
         self.dir_path_organized = Text(self.right_bottom_side, height=1, width=30)
         self.dir_path_organized_btn = Button(self.right_bottom_side, text='SELECT OUPUT PATH',
                                              command=self.set_target_organized_path)
@@ -74,21 +78,24 @@ class View(FileSystemEventHandler):
                                                    command=self.set_target_organized_path_popup)
 
         # organized_dir_name
+        # TODO refractor to entry to disable next id empty
         self.organized_dir_name_label = tk.Label(self.right_bottom_side, text="CUSTOM NAME",
                                                  height=1)
         self.organized_dir_name = Text(self.right_bottom_side, height=1, width=30)
+
 
         self.newDirecoryLabel = tk.Label(self.right_bottom_side, text="new directory", height=1)
         self.newNameTextBox = tk.Text(self.right_bottom_side, height=1, width=20)
 
         self.btnCreateDir = tk.Button(self.right_bottom_side, text="create new directory", command=self.createNewDir)
 
+
         self.clean_up_label = tk.Label(self.right_bottom_side, text="cleanup", height=1)
         # checkbox for recursive cleaning folders,
         self.recursive_clean_up_var = tk.IntVar()
         self.recursive_clean_up_checkbox = tk.Checkbutton(self.right_bottom_side, text='deep',
                                                           variable=self.recursive_clean_up_var, onvalue=1, offvalue=0)
-        # chceckbox for adding date of files not today!
+        # chceckbox for adding date of files
         self.dated_clean_up_var = tk.IntVar()
         self.dated_clean_up_checkbox = tk.Checkbutton(self.right_bottom_side, text='dated',
                                                       variable=self.dated_clean_up_var, onvalue=1, offvalue=0)
@@ -97,8 +104,16 @@ class View(FileSystemEventHandler):
         self.shortcut_checkbox = tk.Checkbutton(self.right_bottom_side, text='shortcut',
                                                 variable=self.shortcut_var, onvalue=1, offvalue=0)
 
+        #only_view
+        self.only_view_var = tk.IntVar()
+        self.only_view_checkbox = tk.Checkbutton(self.right_bottom_side, text='only view',
+                                                variable=self.only_view_var, onvalue=1, offvalue=0)
+
         self.clean_up_button = tk.Button(self.right_bottom_side, text="CLEANUP", command=self.clean_up, background='green')
         # self.clean_up_button['state'] = 'disabled'
+        #undo_button
+        # TODO diable before cleanup
+        self.undo_button = Button(self.right_bottom_side, text="UNDO", command=self.undo, background='red')
 
         self.tv = ttk.Treeview(self.left_side, show='tree')
         self.ybar = tk.Scrollbar(self.left_side, orient=tk.VERTICAL,
@@ -139,9 +154,11 @@ class View(FileSystemEventHandler):
         self.dir_path_to_organize_btn.grid(row=1, column=0, sticky="nsew")
         self.dir_path_to_organize_popup_btn.grid(row=1, column=1, sticky="nsew")
 
-        self.dir_path_organized.grid(row=3, column=0, columnspan=2, sticky="nsew")
-        self.dir_path_organized_btn.grid(row=4, column=0, sticky="nsew")
-        self.dir_path_organized_popup_btn.grid(row=4, column=1, sticky="nsew")
+        self.dir_path_organized.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        self.dir_path_organized_btn.grid(row=3, column=0, sticky="nsew")
+        self.dir_path_organized_popup_btn.grid(row=3, column=1, sticky="nsew")
+
+        self.undo_button.grid(row=4, column=0, columnspan=2, sticky="nsew")
 
         self.organized_dir_name_label.grid(row=0, column=2, columnspan=2, sticky="nsew")
         self.organized_dir_name.grid(row=1, column=2, columnspan=2, sticky="nsew")
@@ -149,6 +166,7 @@ class View(FileSystemEventHandler):
         self.recursive_clean_up_checkbox.grid(row=2, column=2, sticky="nsew")
         self.dated_clean_up_checkbox.grid(row=2, column=3, sticky="nsew")
         self.shortcut_checkbox.grid(row=3, column=2, sticky="nsew")
+        self.only_view_checkbox.grid(row=3, column=3, sticky="nsew")
 
         self.clean_up_button.grid(row=4, column=2, columnspan=2, sticky="nsew")
 
@@ -213,7 +231,6 @@ class View(FileSystemEventHandler):
                 else:
                     id = self.tv.insert(parent, 'end', text=f'{d}', open=False)
                 self.traverse_dir(id, full_path, 0)
-                # TODO tutaj udpdate progess baru tlylko jak flag == 1
 
         return acc
 
@@ -300,10 +317,15 @@ class View(FileSystemEventHandler):
                                                                                                                'end-1c')),
                         deep=self.recursive_clean_up_var,
                         dated=self.dated_clean_up_var,
-                        shortcut=self.shortcut_var)
+                        shortcut=self.shortcut_var,
+                        only_view=self.only_view_var)
         self.dir_path_to_organize.delete("1.0", 'end-1c')
         self.dir_path_organized.delete("1.0", 'end-1c')
         self.organized_dir_name.delete("1.0", 'end-1c')
+        self.update_dir()
+
+    def undo(self):
+        pub.sendMessage("Undo_Button_Pressed")
         self.update_dir()
 
     def open_popup(self):
