@@ -48,9 +48,9 @@ class Controller:
 if __name__ == "__main__":
     root = ctk.CTk()
     WIDTH = 1000
-    HEIGHT = 800
+    HEIGHT = 600
     root.geometry("%sx%s" % (WIDTH, HEIGHT))
-    root.minsize(800, 400)
+    root.minsize(800, 600)
     root.maxsize(1920, 1080)
     root.title("DeskCleanUp")
 
