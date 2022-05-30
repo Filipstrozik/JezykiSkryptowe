@@ -8,17 +8,17 @@ from pathlib import Path
 from tkinter import *
 from tkinter import filedialog
 from tkinter import ttk
-import customtkinter as ctk
 
+import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 from pubsub import pub
 from watchdog.events import FileSystemEventHandler
 
 
-
 class View(FileSystemEventHandler):
     def __init__(self, parent):
+        self.tree_view_width = 0
         ctk.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
         ctk.set_default_color_theme("blue")
         self.toolbar = None
@@ -31,9 +31,10 @@ class View(FileSystemEventHandler):
         self.container.config(menu=self.menubar)
         self.extensions_paths = json.load(open('My extension.json'))
         self.directory = str(Path.home() / 'Desktop')
-        self.sizes = []
-        self.dirs = []
-        self.f = Figure(figsize=(1,1), dpi=90)
+        self.file_data = {}
+        # self.sizes = []
+        # self.dirs = []
+        self.f = Figure(figsize=(1, 1), dpi=90)
         self.canvas = FigureCanvasTkAgg(self.f, self.right_top_side)
 
     def setup(self):
@@ -49,90 +50,101 @@ class View(FileSystemEventHandler):
         self.filemenu.add_command(label="Open", command=self.set_path)
 
         # main_side_frame
-        self.main_side = ctk.CTkFrame(master=self.container,corner_radius=0, border_width=20)
+        self.main_side = ctk.CTkFrame(master=self.container)
 
         # right_side_Frame
-        self.right_side = ctk.CTkFrame(master=self.main_side,corner_radius=0, border_width=20)
+        self.right_side = ctk.CTkFrame(master=self.main_side, corner_radius=0, border_width=20)
         # right_side_bottom_frame
-        self.right_bottom_side = ctk.CTkFrame(master=self.right_side,corner_radius=10, height=100)
+        self.right_bottom_side = ctk.CTkFrame(master=self.right_side, corner_radius=10, height=100)
 
         # right_side_top_frame
         self.right_top_side = ctk.CTkFrame(master=self.right_side, corner_radius=10)
 
         # left_side_frame
-        self.left_side = ctk.CTkFrame(master=self.main_side, corner_radius=10, border_color="red")
+        self.left_side = ctk.CTkFrame(master=self.main_side, border_color="red")
 
         self.button = ctk.CTkButton(self.right_bottom_side, text="SHOW PATH", command=self.showPath)
 
         # dir_path_to_organize
         self.dir_path_to_organize_var = StringVar(self.right_bottom_side)
-        self.dir_path_to_organize = ctk.CTkEntry(self.right_bottom_side, textvariable=self.dir_path_to_organize_var, width=30)
+        self.dir_path_to_organize = ctk.CTkEntry(self.right_bottom_side, textvariable=self.dir_path_to_organize_var,
+                                                 width=30)
         self.dir_path_to_organize_btn = ctk.CTkButton(self.right_bottom_side, text='SELECT DIRECTORY',
-                                               command=self.set_cleanup_dir)
+                                                      command=self.set_cleanup_dir)
         self.dir_path_to_organize_popup_btn = ctk.CTkButton(self.right_bottom_side, text='OPEN DIRECTORY',
-                                                     command=self.set_cleanup_dir_popup)
+                                                            command=self.set_cleanup_dir_popup)
 
         # dir_path_organized
         self.dir_path_organized_var = StringVar(self.right_bottom_side)
-        self.dir_path_organized = ctk.CTkEntry(self.right_bottom_side, textvariable=self.dir_path_organized_var, width=30)
+        self.dir_path_organized = ctk.CTkEntry(self.right_bottom_side, textvariable=self.dir_path_organized_var,
+                                               width=30)
         self.dir_path_organized_btn = ctk.CTkButton(self.right_bottom_side, text='SELECT OUPUT PATH',
-                                             command=self.set_target_organized_path)
+                                                    command=self.set_target_organized_path)
         self.dir_path_organized_popup_btn = ctk.CTkButton(self.right_bottom_side, text='OPEN DIRECTORY OUPUT',
-                                                   command=self.set_target_organized_path_popup)
+                                                          command=self.set_target_organized_path_popup)
 
         # organized_dir_name
         self.organized_dir_name_label = ctk.CTkLabel(self.right_bottom_side, text="CUSTOM NAME", height=1)
         self.organized_dir_name_var = StringVar(self.right_bottom_side)
-        self.organized_dir_name = ctk.CTkEntry(self.right_bottom_side, textvariable=self.organized_dir_name_var, width=30)
+        self.organized_dir_name = ctk.CTkEntry(self.right_bottom_side, textvariable=self.organized_dir_name_var,
+                                               width=30)
 
         self.newDirecoryLabel = ctk.CTkLabel(self.right_bottom_side, text="new directory", height=1)
         self.newNameTextBox = ctk.CTkEntry(self.right_bottom_side, height=1, width=20)
 
-        self.btnCreateDir = ctk.CTkButton(self.right_bottom_side, text="create new directory", command=self.createNewDir)
+        self.btnCreateDir = ctk.CTkButton(self.right_bottom_side, text="create new directory",
+                                          command=self.createNewDir)
 
         self.clean_up_label = ctk.CTkLabel(self.right_bottom_side, text="cleanup", height=1)
         # checkbox for recursive cleaning folders,
         self.recursive_clean_up_var = tk.IntVar()
         self.recursive_clean_up_checkbox = ctk.CTkCheckBox(self.right_bottom_side, text='deep',
-                                                          variable=self.recursive_clean_up_var, onvalue=1, offvalue=0,
-                                                          state='disabled')
+                                                           variable=self.recursive_clean_up_var, onvalue=1, offvalue=0,
+                                                           state='disabled')
         # chceckbox for adding date of files
         self.dated_clean_up_var = tk.IntVar()
         self.dated_clean_up_checkbox = ctk.CTkCheckBox(self.right_bottom_side, text='dated',
-                                                      variable=self.dated_clean_up_var, onvalue=1, offvalue=0,
-                                                      state='disabled')
+                                                       variable=self.dated_clean_up_var, onvalue=1, offvalue=0,
+                                                       state='disabled')
 
         self.shortcut_var = tk.IntVar()
         self.shortcut_checkbox = ctk.CTkCheckBox(self.right_bottom_side, text='shortcut',
-                                                variable=self.shortcut_var, onvalue=1, offvalue=0, state='disabled')
+                                                 variable=self.shortcut_var, onvalue=1, offvalue=0, state='disabled')
 
         # only_view
         self.only_view_var = tk.IntVar()
         self.only_view_checkbox = ctk.CTkCheckBox(self.right_bottom_side, text='only view',
-                                                 variable=self.only_view_var, onvalue=1, offvalue=0, state='disabled')
+                                                  variable=self.only_view_var, onvalue=1, offvalue=0, state='disabled')
 
         self.clean_up_button = ctk.CTkButton(self.right_bottom_side, text="CLEANUP", command=self.clean_up,
-                                         background='green', state='disabled')
+                                             background='green', state='disabled')
         # self.clean_up_button['state'] = 'disabled'
         # undo_button
         self.undo_button = ctk.CTkButton(self.right_bottom_side, text="UNDO", command=self.undo, background='red',
-                                  state='disabled')
+                                         state='disabled')
 
         self.tv = ttk.Treeview(self.left_side, show='tree')
         self.ybar = tk.Scrollbar(self.left_side, orient=tk.VERTICAL,
                                  command=self.tv.yview)
         self.xbar = tk.Scrollbar(self.left_side, orient=tk.HORIZONTAL, command=self.tv.xview)
+
         self.tv.configure(yscrollcommand=self.ybar.set, xscrollcommand=self.xbar.set)
 
         self.tv.heading('#0', text='Dir：' + self.directory, anchor='w')
         self.tree_view_width = 0
-        self.tv.column('#0', minwidth=600, width=600, stretch=True, anchor=CENTER)
+        # self.tv.column('#0', minwidth=600, width=600, stretch=True, anchor=CENTER)
         self.path = os.path.abspath(self.directory)
         self.node = self.tv.insert('', 'end', text=self.path, open=True)
         self.open_progress_bar()
         self.traverse_dir(self.node, self.path, 1)
-        print(self.tree_view_width)
+        print('szerokosc')
+        self.tree_view_width *= 20
 
+        # self.tv.column('#0', minwidth=(self.tree_view_width*10), width=600, stretch=True, anchor=CENTER)
+        self.tv.column('#0', minwidth=self.tree_view_width, width=600,stretch=True, anchor=CENTER)
+        self.tv.configure(yscrollcommand=self.ybar.set, xscrollcommand=self.xbar.set)
+
+        print(self.tree_view_width)
         self.graph()
         self.top_progress.destroy()
 
@@ -162,34 +174,36 @@ class View(FileSystemEventHandler):
 
         s = ttk.Style()
         s.configure('Treeview', rowheight=40)
-        self.tv.pack(side='left', fill=BOTH)
+        self.tv.pack(side='left', fill=Y)
 
         self.main_side.columnconfigure(0, weight=1)
-        self.main_side.columnconfigure(1, weight=6)
+        self.main_side.columnconfigure(1, weight=1)
         self.main_side.rowconfigure(0, weight=1)
 
         self.right_side.columnconfigure(0, weight=1)
         self.right_side.rowconfigure(0, weight=4)
         self.right_side.rowconfigure(1, weight=1)
 
+        # self.left_side.grid(row=0, column=0, sticky="nsew") #bylo
         self.left_side.grid(row=0, column=0, sticky="nsew")
+
         self.right_side.grid(row=0, column=1, sticky="nsew")
 
         self.dir_path_to_organize_var.trace('w', self.check_fields)
-        self.dir_path_to_organize.grid(row=0, column=0, columnspan=2, sticky="ew",padx=10, pady=2)
-        self.dir_path_to_organize_btn.grid(row=1, column=0, sticky="ew",padx=10, pady=2)
-        self.dir_path_to_organize_popup_btn.grid(row=1, column=1, sticky="ew",padx=10, pady=2)
+        self.dir_path_to_organize.grid(row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=2)
+        self.dir_path_to_organize_btn.grid(row=1, column=0, sticky="ew", padx=10, pady=2)
+        self.dir_path_to_organize_popup_btn.grid(row=1, column=1, sticky="ew", padx=10, pady=2)
 
         self.dir_path_organized_var.trace("w", self.check_fields)
-        self.dir_path_organized.grid(row=2, column=0, columnspan=2, sticky="new",padx=10, pady=2)
-        self.dir_path_organized_btn.grid(row=3, column=0, sticky="ew",padx=10, pady=2)
-        self.dir_path_organized_popup_btn.grid(row=3, column=1, sticky="ew",padx=10, pady=2)
+        self.dir_path_organized.grid(row=2, column=0, columnspan=2, sticky="new", padx=10, pady=2)
+        self.dir_path_organized_btn.grid(row=3, column=0, sticky="ew", padx=10, pady=2)
+        self.dir_path_organized_popup_btn.grid(row=3, column=1, sticky="ew", padx=10, pady=2)
 
-        self.undo_button.grid(row=4, column=0, columnspan=2, sticky="nsew",padx=10, pady=10)
+        self.undo_button.grid(row=4, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
 
-        self.organized_dir_name_label.grid(row=0, column=2, columnspan=2, sticky="sew",padx=10)
+        self.organized_dir_name_label.grid(row=0, column=2, columnspan=2, sticky="sew", padx=10)
         self.organized_dir_name_var.trace('w', self.check_fields)
-        self.organized_dir_name.grid(row=1, column=2, columnspan=2, sticky="new",padx=10, pady=10)
+        self.organized_dir_name.grid(row=1, column=2, columnspan=2, sticky="new", padx=10, pady=10)
 
         self.recursive_clean_up_checkbox.grid(row=2, column=2, sticky="nsew")
         self.dated_clean_up_checkbox.grid(row=2, column=3, sticky="nsew")
@@ -214,10 +228,7 @@ class View(FileSystemEventHandler):
 
         self.right_bottom_side.grid(row=1, column=0, sticky="nsew")
 
-
-    #TODO zliczanie szerokosci potrzebnej do wyswietlenia w treeview
-    #TODO pokazywanie MB i KB lub B w zaleznosci jak duze są pliki DOne
-    #TODO wykres - pokazywanie tych znaczących = nie pokazywac malych w trakcie
+    # TODO zliczanie szerokosci potrzebnej do wyswietlenia w treeview
     def traverse_dir(self, parent, path, flag) -> float:
         acc = 0
         if flag == 1:
@@ -225,15 +236,13 @@ class View(FileSystemEventHandler):
             x = 100.0 / no_dirs
         for d in os.listdir(path):
             full_path = os.path.join(path, d)
-            # self.tree_view_width = max(100 + len(d), self.tree_view_width)
-            # print(len(d))
             isdir = os.path.isdir(full_path)
             if not isdir:
                 file_size = float(os.path.getsize(full_path))
                 acc += file_size
                 if flag == 1:
-                    self.sizes.append(file_size)
-                    self.dirs.append(d)
+
+                    self.file_data[d] = file_size
                     self.container.update_idletasks()
                     try:
                         self.pb['value'] += x
@@ -241,22 +250,26 @@ class View(FileSystemEventHandler):
                         pass
                 size, postfix = self.format_bytes(file_size)
                 text_to_insert = f'{d} [{"%.2f" % round(size, 2)} {postfix}]'
+                # print(len(text_to_insert))
+                self.tree_view_width = max(len(text_to_insert), self.tree_view_width)
+
                 self.tv.insert(parent, 'end', text=text_to_insert, open=False)
 
             if isdir:
                 if flag == 1:
                     p = subprocess.check_output(['powershell.exe',
-                                                 f'((Get-ChildItem "{full_path}" -Recurse | Measure-Object -Property Length -Sum -ErrorAction Stop).Sum)'])# result in Bytes
+                                                 f'((Get-ChildItem "{full_path}" -Recurse | Measure-Object -Property Length -Sum -ErrorAction Stop).Sum)'])  # result in Bytes
 
                     pString = str(p)
                     pString = pString[2:len(pString) - 5]
                     pString = pString.replace(",", ".")
                     fsize = float(pString)
 
-                    self.sizes.append(fsize)
-                    self.dirs.append(d)
+                    self.file_data[d] = fsize
                     size, postfix = self.format_bytes(fsize)
                     text_to_insert = f'{d} [{"%.2f" % round(size, 2)} {postfix}]'
+                    # print(len(text_to_insert))
+                    self.tree_view_width = max(len(text_to_insert), self.tree_view_width)
                     id = self.tv.insert(parent, 'end', text=text_to_insert, open=False)
                     self.container.update_idletasks()
                     try:
@@ -282,28 +295,23 @@ class View(FileSystemEventHandler):
     def update_dir(self):
         for item in self.tv.get_children():
             self.tv.delete(item)
-        self.dirs.clear()
-        self.sizes.clear()
+        self.file_data.clear()
         self.tv.heading('#0', text='Dir：' + self.directory, anchor='w')
         # self.tv.column('#0', minwidth=600, width=200, stretch=True, anchor=CENTER)
         self.path = os.path.abspath(self.directory)
         self.node = self.tv.insert('', 'end', text=self.path, open=True)
+        self.tree_view_width = 0
         self.clear_graph()
         self.traverse_dir(self.node, self.path, 1)
+        print('serokosc')
+        self.tree_view_width *= 12
+        print(self.tree_view_width)
+        print('okno')
+        print(self.left_side.winfo_width())
+        self.tv.column('#0', minwidth=self.tree_view_width, width=self.left_side.winfo_width(), stretch=True, anchor=CENTER)
+        # self.tv.column('#0', minwidth=(self.tree_view_width*20), width=600)
         self.graph()
-        self.setup_layout()
-        #pack(again)
-
-        # self.right_side.columnconfigure(0, weight=1)
-        # self.right_side.rowconfigure(0, weight=1)
-        # self.right_side.rowconfigure(1, weight=4)
-        #
-        # self.left_side.grid(row=0, column=0, sticky="nsew")
-        # self.right_side.grid(row=0, column=1, sticky="nsew")
-        #
-        # self.right_top_side.grid(row=0, column=0, sticky="nsew")
-        # self.right_bottom_side.grid(row=1, column=0, sticky="nsew")
-
+        # self.setup_layout() #to nie dzialalo
 
         print('done')
         self.top_progress.destroy()
@@ -312,7 +320,7 @@ class View(FileSystemEventHandler):
     def set_path(self):
         self.directory = tk.filedialog.askdirectory()
         self.open_progress_bar()
-        t2 = threading.Thread(target=self.update_dir)  # TODO to wcale nie dziala tak jak bysmy chcieli
+        t2 = threading.Thread(target=self.update_dir)
         t2.start()
 
     # dir_path_to_organize
@@ -428,7 +436,7 @@ class View(FileSystemEventHandler):
         delete_row_ext_dir_btn.pack()
 
         def check_edit_btn(*args):
-            if (len(self.change_dir_name.get()) > 0):
+            if len(self.change_dir_name.get()) > 0:
                 edit_btn.config(state='normal')
             else:
                 edit_btn.config(state='disabled')
@@ -493,32 +501,37 @@ class View(FileSystemEventHandler):
             self.ext.insert('', tk.END, values=(row, self.extensions_paths[row]))
 
     def graph(self):
-        print(self.sizes)
-        print(self.dirs)
+
         sum = 0.0
-        for size in self.sizes: #chyba acc koncowo jest suma?
+        for size in self.file_data.values():  # chyba acc koncowo jest suma?
             sum += size
 
-        #filtr pokazywania na wykresie
-        # for size in self.sizes:
-        #     if (size / sum) < 0.05:
-        #         self.sizes.remove(size)
+        self.file_data = dict(sorted(self.file_data.items(), key=lambda kv: kv[1], reverse=True))
+        to_graph = {}
+        for (key, value) in self.file_data.items():
+            if value / sum > 0.02:
+                if len(key) > 20:
+                    key = key[:20]
+                    key += '...'
+                to_graph[key] = value
+
+        print(self.file_data)
 
         self.f = Figure(figsize=(8, 6), dpi=90)
         self.a = self.f.add_subplot(111)
 
-        # self.a.clear()
 
-        self.a.pie(self.sizes, radius=0.7, labels=self.dirs,
-                   autopct=lambda x: '{size} {postfix}'.format(size = "%.2f" % round(self.format_bytes(x * sum / 100)[0], 2), postfix = self.format_bytes(x * sum / 100)[1]),
+        self.a.pie(to_graph.values(), radius=0.7, labels=to_graph.keys(),
+                   autopct=lambda x: '{size} {postfix}'.format(
+                       size="%.2f" % round(self.format_bytes(x * sum / 100)[0], 2),
+                       postfix=self.format_bytes(x * sum / 100)[1]),
                    textprops={'fontsize': 8})
-        #f'"%.2f" % round(self.format_bytes(x * sum / 100)[0], 2)} {self.format_bytes(x * sum / 100)[0]}]'
+        # f'"%.2f" % round(self.format_bytes(x * sum / 100)[0], 2)} {self.format_bytes(x * sum / 100)[0]}]'
         self.a.set_title(f'{self.directory}', size=10, weight='bold')
         # self.a.pie(self.sizes, radius=1, labels=self.dirs, shadow=True, autopct='%0.2f%%')
         # self.a.legend(loc="best")
 
         self.canvas = FigureCanvasTkAgg(self.f, self.right_top_side)
-
 
         self.toolbar = NavigationToolbar2Tk(self.canvas, self.right_top_side)
         self.canvas.get_tk_widget().pack(side=TOP, expand=True, padx=20, pady=20)
@@ -531,7 +544,6 @@ class View(FileSystemEventHandler):
         print('usuwam graf')
         self.canvas.get_tk_widget().destroy()
         self.toolbar.destroy()
-
 
     def open_progress_bar(self):
         self.top_progress = Toplevel(self.container)
