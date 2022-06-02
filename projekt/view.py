@@ -18,9 +18,18 @@ from watchdog.events import FileSystemEventHandler
 
 class View(FileSystemEventHandler):
     def __init__(self, parent):
+        self.ext = None
+        self.dir_path_organized_var = None
+        self.dir_path_to_organize_popup_btn = None
+        self.dir_path_to_organize_btn = None
+        self.dir_path_to_organize = None
+        self.dir_path_to_organize_var = None
+        self.setmenu = None
+        self.right_side = None
+        self.filemenu = None
         self.tree_view_width = 0
-        ctk.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
-        ctk.set_default_color_theme("blue")
+        ctk.set_appearance_mode("Light")  # Modes: "System" (standard), "Dark", "Light"
+        ctk.set_default_color_theme('dark-blue')
         self.toolbar = None
         self.left_side = None
         self.right_top_side = None
@@ -32,8 +41,6 @@ class View(FileSystemEventHandler):
         self.extensions_paths = json.load(open('My extension.json'))
         self.directory = str(Path.home() / 'Desktop')
         self.file_data = {}
-        # self.sizes = []
-        # self.dirs = []
         self.f = Figure(figsize=(1, 1), dpi=90)
         self.canvas = FigureCanvasTkAgg(self.f, self.right_top_side)
 
@@ -51,19 +58,16 @@ class View(FileSystemEventHandler):
 
         # main_side_frame
         self.main_side = ctk.CTkFrame(master=self.container)
-
         # right_side_Frame
-        self.right_side = ctk.CTkFrame(master=self.main_side, corner_radius=0, border_width=20)
+        self.right_side = ctk.CTkFrame(master=self.main_side, corner_radius=0)
         # right_side_bottom_frame
-        self.right_bottom_side = ctk.CTkFrame(master=self.right_side, corner_radius=10, height=100)
+        self.right_bottom_side = ctk.CTkFrame(master=self.right_side, corner_radius=20, height=100, fg_color='#e4e4e4', bg_color='#f2f2f2')
 
         # right_side_top_frame
         self.right_top_side = ctk.CTkFrame(master=self.right_side, corner_radius=10)
 
         # left_side_frame
         self.left_side = ctk.CTkFrame(master=self.main_side, border_color="red")
-
-        self.button = ctk.CTkButton(self.right_bottom_side, text="SHOW PATH", command=self.showPath)
 
         # dir_path_to_organize
         self.dir_path_to_organize_var = StringVar(self.right_bottom_side)
@@ -132,16 +136,14 @@ class View(FileSystemEventHandler):
 
         self.tv.heading('#0', text='Dir：' + self.directory, anchor='w')
         self.tree_view_width = 0
-        # self.tv.column('#0', minwidth=600, width=600, stretch=True, anchor=CENTER)
         self.path = os.path.abspath(self.directory)
         self.node = self.tv.insert('', 'end', text=self.path, open=True)
         self.open_progress_bar()
         self.traverse_dir(self.node, self.path, 1)
-        print('szerokosc')
         self.tree_view_width *= 20
 
         # self.tv.column('#0', minwidth=(self.tree_view_width*10), width=600, stretch=True, anchor=CENTER)
-        self.tv.column('#0', minwidth=self.tree_view_width, width=600,stretch=True, anchor=CENTER)
+        self.tv.column('#0', minwidth=self.tree_view_width, width=600, stretch=True, anchor=CENTER)
         self.tv.configure(yscrollcommand=self.ybar.set, xscrollcommand=self.xbar.set)
 
         print(self.tree_view_width)
@@ -174,6 +176,7 @@ class View(FileSystemEventHandler):
 
         s = ttk.Style()
         s.configure('Treeview', rowheight=40)
+        # s.configure('TProgressbar', thickness=40)
         self.tv.pack(side='left', fill=Y)
 
         self.main_side.columnconfigure(0, weight=1)
@@ -205,11 +208,11 @@ class View(FileSystemEventHandler):
         self.organized_dir_name_var.trace('w', self.check_fields)
         self.organized_dir_name.grid(row=1, column=2, columnspan=2, sticky="new", padx=10, pady=10)
 
-        self.recursive_clean_up_checkbox.grid(row=2, column=2, sticky="nsew")
-        self.dated_clean_up_checkbox.grid(row=2, column=3, sticky="nsew")
-        self.shortcut_checkbox.grid(row=3, column=2, sticky="nsew")
-        self.only_view_checkbox.grid(row=3, column=3, sticky="nsew")
-        self.clean_up_button.grid(row=4, column=2, columnspan=2, sticky="nsew")
+        self.recursive_clean_up_checkbox.grid(row=2, column=2, sticky="nsew", padx=10)
+        self.dated_clean_up_checkbox.grid(row=2, column=3, sticky="nsew",padx=10)
+        self.shortcut_checkbox.grid(row=3, column=2, sticky="nsew",padx=10)
+        self.only_view_checkbox.grid(row=3, column=3, sticky="nsew", padx=10)
+        self.clean_up_button.grid(row=4, column=2, columnspan=2, sticky="nwe",padx=10)
 
         self.right_top_side.grid(row=0, column=0, sticky="nsew")
         # self.right_top_side.grid(row=0, column=0)
@@ -228,11 +231,12 @@ class View(FileSystemEventHandler):
 
         self.right_bottom_side.grid(row=1, column=0, sticky="nsew")
 
-    # TODO zliczanie szerokosci potrzebnej do wyswietlenia w treeview
     def traverse_dir(self, parent, path, flag) -> float:
         acc = 0
         if flag == 1:
             no_dirs = len(os.listdir(path))
+            if no_dirs == 0:
+                return 0.0
             x = 100.0 / no_dirs
         for d in os.listdir(path):
             full_path = os.path.join(path, d)
@@ -263,7 +267,10 @@ class View(FileSystemEventHandler):
                     pString = str(p)
                     pString = pString[2:len(pString) - 5]
                     pString = pString.replace(",", ".")
-                    fsize = float(pString)
+                    if len(pString) == 0:
+                        fsize = 0
+                    else:
+                        fsize = float(pString)
 
                     self.file_data[d] = fsize
                     size, postfix = self.format_bytes(fsize)
@@ -308,7 +315,8 @@ class View(FileSystemEventHandler):
         print(self.tree_view_width)
         print('okno')
         print(self.left_side.winfo_width())
-        self.tv.column('#0', minwidth=self.tree_view_width, width=self.left_side.winfo_width(), stretch=True, anchor=CENTER)
+        self.tv.column('#0', minwidth=self.tree_view_width, width=self.left_side.winfo_width(), stretch=True,
+                       anchor=CENTER)
         # self.tv.column('#0', minwidth=(self.tree_view_width*20), width=600)
         self.graph()
         # self.setup_layout() #to nie dzialalo
@@ -319,9 +327,11 @@ class View(FileSystemEventHandler):
 
     def set_path(self):
         self.directory = tk.filedialog.askdirectory()
-        self.open_progress_bar()
-        t2 = threading.Thread(target=self.update_dir)
-        t2.start()
+        if len(self.directory)>0:
+            pub.sendMessage("Set_Path_Button_Pressed")
+            self.open_progress_bar()
+            t2 = threading.Thread(target=self.update_dir)
+            t2.start()
 
     # dir_path_to_organize
     def set_cleanup_dir_popup(self):
@@ -343,25 +353,11 @@ class View(FileSystemEventHandler):
     def set_target_organized_dir_name(self):
         self.organized_dir_name.get()
 
-    def showPath(self):  # redundancja
-        item_iid = self.tv.selection()[0]
-        parent_iid = self.tv.parent(item_iid)
-        node = []
-
-        while parent_iid != '':
-            node.insert(0, self.tv.item(parent_iid)['text'])
-            parent_iid = self.tv.parent(parent_iid)
-        i = self.tv.item(item_iid, "text")
-        path = os.path.join(*node, i)
-        pub.sendMessage("ShowPath_Button_Pressed")
-        return path
-
     def getSelectedPath(self):
         try:
             item_iid = self.tv.selection()[0]
             parent_iid = self.tv.parent(item_iid)
             node = []
-
             while parent_iid != '':
                 node.insert(0, self.tv.item(parent_iid)['text'])
                 parent_iid = self.tv.parent(parent_iid)
@@ -369,7 +365,7 @@ class View(FileSystemEventHandler):
             path = os.path.join(*node, i)
             return path
         except IndexError:
-            self.popup_error('Error!', 'No extension is selected! - select one.')
+            self.popup_error('Error!', 'No path is selected! - select one.')
             return ''
 
     def createNewDir(self):
@@ -388,71 +384,82 @@ class View(FileSystemEventHandler):
         self.dir_path_to_organize.delete(0, END)
         self.dir_path_organized.delete(0, END)
         self.organized_dir_name.delete(0, END)
-        self.update_dir()
+        self.open_progress_bar()
+        t2 = threading.Thread(target=self.update_dir)
+        t2.start()
         self.undo_button.config(state='normal')
 
     def undo(self):
-        pub.sendMessage("Undo_Button_Pressed")
+        pub.sendMessage("Undo_Button_Pressed", only_view=self.only_view_var)
         self.update_dir()
         self.undo_button.config(state='disabled')
 
     def open_popup(self):
-        self.top = Toplevel(self.container)
+        self.top = ctk.CTkToplevel(self.container)
         self.top.resizable(False, False)
-        self.top.geometry("400x600")
+        self.top.geometry("600x350")
         self.top.title("Setting extensions directory names")
         columns = ('extension', 'directory name')
         self.ext = ttk.Treeview(self.top, columns=columns, show='headings')
         self.ext.heading('extension', text='extension')
         self.ext.heading('directory name', text='name of directory')
+        self.ext.column('extension', width=600)
+        self.ext.column('directory name', width=600)
         self.extensions_paths = json.load(open('My extension.json'))
         for row in self.extensions_paths:
             self.ext.insert('', tk.END, values=(row, self.extensions_paths[row]))
 
         self.change_dir_name = tk.StringVar(self.top)
-        self.dir_name_text = Entry(self.top, textvariable=self.change_dir_name)
+        self.dir_name_text = ctk.CTkEntry(self.top, textvariable=self.change_dir_name)
 
-        edit_btn = Button(self.top, text='edit directory name', command=self.edit_dir_name, state='disabled')
+        self.edit_btn = ctk.CTkButton(self.top, text='select & edit', command=self.edit_dir_name, state='disabled')
 
         self.new_ext_name = tk.StringVar(self.top)
-        self.add_new_ext_text = Entry(self.top, textvariable=self.new_ext_name)
+        self.add_new_ext_text = ctk.CTkEntry(self.top, textvariable=self.new_ext_name)
 
         self.new_ext_dir_name = tk.StringVar(self.top)
-        self.add_new_ext_dir_name_text = Entry(self.top, textvariable=self.new_ext_dir_name)
+        self.add_new_ext_dir_name_text = ctk.CTkEntry(self.top, textvariable=self.new_ext_dir_name)
 
         self.focus = tk.StringVar(self.top, value=self.ext.focus())
-        self.focus_entry = Entry(self.top, textvariable=self.focus)
+        self.focus_entry = ctk.CTkEntry(self.top, textvariable=self.focus)
 
-        add_new_ext_dir_btn = Button(self.top, text="add new ext - dir name", command=self.add_new_ext_dir,
-                                     state='disabled')
-        delete_row_ext_dir_btn = Button(self.top, text='select & delete', command=self.delete_ext_dir, state='normal')
+        self.add_new_ext_dir_btn = ctk.CTkButton(self.top, text="add new", command=self.add_new_ext_dir,
+                                            state='disabled')
+        self.delete_row_ext_dir_btn = ctk.CTkButton(self.top, text='select & delete', command=self.delete_ext_dir,
+                                               state='normal')
 
-        self.ext.pack(fill=Y)
-        self.dir_name_text.pack()
-        edit_btn.pack()
-        self.add_new_ext_text.pack()
-        self.add_new_ext_dir_name_text.pack()
-        add_new_ext_dir_btn.pack()
-        delete_row_ext_dir_btn.pack()
+        extension_name = ctk.CTkLabel(self.top, text="new extension", height=1)
+        name_of_directory = ctk.CTkLabel(self.top, text="edit extension directory", height=1)
+        name_of_directory2 = ctk.CTkLabel(self.top, text="new directory", height=1)
+
+        self.ext.grid(row=0, column=0, columnspan=5)
+        name_of_directory.grid(row=1, column=0)
+        self.dir_name_text.grid(row=1, column=1, columnspan=3, sticky="ew")
+        self.edit_btn.grid(row=1, column=4,sticky="nsew", padx=40)
+        extension_name.grid(row=2, column=0)
+        self.add_new_ext_text.grid(row=2, column=1, columnspan=3, sticky="ew")
+        name_of_directory2.grid(row=3, column=0)
+        self.add_new_ext_dir_name_text.grid(row=3, column=1, columnspan=3, sticky="ew")
+        self.add_new_ext_dir_btn.grid(row=2, column=4, rowspan=2, sticky="nsew", padx=40, pady=5)
+        self.delete_row_ext_dir_btn.grid(row=4, column=4, sticky="nsew", padx=40)
 
         def check_edit_btn(*args):
             if len(self.change_dir_name.get()) > 0:
-                edit_btn.config(state='normal')
+                self.edit_btn.config(state='normal')
             else:
-                edit_btn.config(state='disabled')
+                self.edit_btn.config(state='disabled')
 
         self.change_dir_name.trace('w', check_edit_btn)
 
         def check_add_btn(*args):
             i = len(self.new_ext_name.get())
             j = len(self.new_ext_dir_name.get())
-            # print(i > 0 and j > 0 and self.new_ext_name.get().startswith('.'))
             if i > 0 and j > 0 and self.new_ext_name.get().startswith('.'):
-                print('enable')
-                add_new_ext_dir_btn.config(state='normal')
+                self.add_new_ext_dir_btn.config(state='normal')
+                # self.edit_btn.config(state='normal')
             else:
-                print('disable')
-                add_new_ext_dir_btn.config(state='disabled')
+                self.add_new_ext_dir_btn.config(state='disabled')
+                # self.edit_btn.config(state='disabled')
 
         self.new_ext_name.trace('w', check_add_btn)
         self.new_ext_dir_name.trace('w', check_add_btn)
@@ -520,8 +527,7 @@ class View(FileSystemEventHandler):
         self.f = Figure(figsize=(8, 6), dpi=90)
         self.a = self.f.add_subplot(111)
 
-
-        self.a.pie(to_graph.values(), radius=0.7, labels=to_graph.keys(),
+        self.a.pie(to_graph.values(), radius=1.0, labels=to_graph.keys(),
                    autopct=lambda x: '{size} {postfix}'.format(
                        size="%.2f" % round(self.format_bytes(x * sum / 100)[0], 2),
                        postfix=self.format_bytes(x * sum / 100)[1]),
@@ -534,7 +540,9 @@ class View(FileSystemEventHandler):
         self.canvas = FigureCanvasTkAgg(self.f, self.right_top_side)
 
         self.toolbar = NavigationToolbar2Tk(self.canvas, self.right_top_side)
-        self.canvas.get_tk_widget().pack(side=TOP, expand=True, padx=20, pady=20)
+        # self.toolbar.winfo_children()[-2].config(foreground='red')
+        # self.canvas.get_tk_widget().pack(side=TOP, expand=True, padx=20, pady=20)
+        self.canvas.get_tk_widget().pack(side=TOP, expand=True)
         # self.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=True, padx=20, pady=20)
         self.toolbar.update()
         # self.canvas._tkcanvas.pack()
@@ -546,36 +554,29 @@ class View(FileSystemEventHandler):
         self.toolbar.destroy()
 
     def open_progress_bar(self):
-        self.top_progress = Toplevel(self.container)
+        self.top_progress = ctk.CTkToplevel(self.container)
         self.top_progress.resizable(False, False)
-        self.top_progress.geometry("300x20")
+        self.top_progress.geometry("600x140")
         self.pb = ttk.Progressbar(self.top_progress,
                                   orient='horizontal',
                                   mode='determinate',
-                                  length=280)
+                                  length=1200)
         # self.pb.start(20)
-        self.pb.pack()
+        self.label_loading = ctk.CTkLabel(master=self.top_progress, text='Loading...')
+        self.pb.pack(ipady=100)
+        self.label_loading.pack()
 
     def popup_error(self, frame_text, info_text):
         tkinter.messagebox.showerror(frame_text, info_text)
 
-    # def on_modified(self, event):
-    #     if self.flag == 1:
-    #         print('on_modified!')
-    #         self.open_progress_bar()
-    #         t2 = threading.Thread(target=self.update_dir)  # TODO to wcale nie dziala tak jak bysmy chcieli
-    #         t2.start()
-    #         t2.join()
 
     def on_created(self, event):
-        print('on_created!')
         self.open_progress_bar()
         t2 = threading.Thread(target=self.update_dir)
         t2.start()
         t2.join()
 
     def on_deleted(self, event):
-        print('on_deleted')
         self.open_progress_bar()
         t2 = threading.Thread(target=self.update_dir)
         t2.start()

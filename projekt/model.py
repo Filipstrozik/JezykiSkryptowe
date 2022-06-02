@@ -19,7 +19,6 @@ class Model:
             self.extensions_paths = json.load(open('My extension.json'))
             print('loaeded')
             print(self.extensions_paths)
-
         except:
             self.extensions_paths = extensions_paths
             print('no file - save')
@@ -31,9 +30,6 @@ class Model:
         with open('My extension.json', 'w') as f:
             f.write(j)
             f.close()
-
-    def showPath(self):
-        print('model - showpath function launched')
 
     def createNewDir(self, path):
         print(path)
@@ -78,9 +74,9 @@ class Model:
             if child.is_dir():
                 self.undo_help(child)
 
-    def undo(self, path: Path):
-        self.undo_help(path)
-        print('done moving - delete destination')
+    def undo(self, path: Path, only_view):
+        if only_view.get() != 1:
+            self.undo_help(path)
         shutil.rmtree(self.destination)
 
     def create_shortcut(self, path, target='', name='shortcut'):
